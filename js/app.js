@@ -11,6 +11,9 @@ import quizView from "./views/quiz.js";
 import wrongnoteView from "./views/wrongnote.js";
 import shopView from "./views/shop.js";
 
+// UI 컨트롤러 (네비게이션 탭 등) 로드
+import "./ui/header.js";
+
 class AppRouter {
   constructor() {
     this.views = {
