@@ -15,13 +15,38 @@ class FlashcardView {
     this.orderMode = 'sequential';  // 'sequential'(순차), 'level'(단계별), 'review_completed'(완료복습), 'review_incomplete'(미흡복습), 'word'(실생활단어)
     this.selectedLevel = 1;         // 수준 1~5
     
-    // 신설: 학습실 입장 제어 상태
+    // 학습실 입장 제어 상태
     this.isStarted = false;
 
-    // 신설: 제스처 트랙킹 좌표
+    // 제스처 트랙킹 좌표
     this.startX = 0;
     this.startY = 0;
     this.isDragging = false;
+
+    // 신설: TTS 중복 자동 낭독 방지용 인덱스 락커 (1회 재생 통제)
+    this.lastPlayedIndex = -1;
+  }
+
+  // 브라우저 내장 오프라인 Web Speech TTS 재생 기능
+  speakKorean(text) {
+    if ('speechSynthesis' in window) {
+      // 재생 중이던 모든 음성 즉시 취소 (중첩 및 꼬임 현상 완전 배제)
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ko-KR';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      
+      // 모바일 기기별 비동기 음성 검색에 대응하여 안전하게 voice 설정
+      const voices = window.speechSynthesis.getVoices();
+      const koVoice = voices.find(v => v.lang.startsWith('ko'));
+      if (koVoice) {
+        utterance.voice = koVoice;
+      }
+      
+      window.speechSynthesis.speak(utterance);
+    }
   }
 
   // 필터링 및 정렬 수행
@@ -36,17 +61,14 @@ class FlashcardView {
         .filter(c => c.tag === this.selectedLevel)
         .sort((a, b) => a.stroke - b.stroke || a.id - b.id);
     } else if (this.orderMode === 'review_completed') {
-      // 완료 복습: 암기 완료(memorized: true)된 카드만 모음
       this.filteredCards = [...ALL_CHUNJA_DATA]
         .filter(c => progress[c.id]?.memorized === true)
         .sort((a, b) => a.id - b.id);
     } else if (this.orderMode === 'review_incomplete') {
-      // 미흡 복습: 암기가 안 된(progress에 없거나 memorized: false) 카드만 모음
       this.filteredCards = [...ALL_CHUNJA_DATA]
         .filter(c => !progress[c.id] || progress[c.id]?.memorized === false)
         .sort((a, b) => a.id - b.id);
     } else if (this.orderMode === 'word') {
-      // 실생활 단어 학습 모드: 전체 1000자와 연계된 단어 학습 범위 구성
       this.filteredCards = [...ALL_CHUNJA_DATA].sort((a, b) => a.id - b.id);
     }
     
@@ -110,7 +132,7 @@ class FlashcardView {
             </div>
           </label>
 
-          <!-- 모드 3: 완료 복습 모드 (신설) -->
+          <!-- 모드 3: 완료 복습 모드 -->
           <label class="quiz-option-row" style="cursor: pointer; display: flex; align-items: flex-start; gap: 14px; border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.02);">
             <input type="radio" name="learning-mode-select" value="review_completed" ${this.orderMode === 'review_completed' ? 'checked' : ''} style="margin-top: 5px; scale: 1.2; accent-color: var(--success);" ${completedCards.length === 0 ? 'disabled' : ''}>
             <div style="flex: 1;">
@@ -128,7 +150,7 @@ class FlashcardView {
             </div>
           </label>
 
-          <!-- 모드 4: 미흡 복습 모드 (신설) -->
+          <!-- 모드 4: 미흡 복습 모드 -->
           <label class="quiz-option-row" style="cursor: pointer; display: flex; align-items: flex-start; gap: 14px; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.02);">
             <input type="radio" name="learning-mode-select" value="review_incomplete" ${this.orderMode === 'review_incomplete' ? 'checked' : ''} style="margin-top: 5px; scale: 1.2; accent-color: var(--error);" ${incompleteCards.length === 0 ? 'disabled' : ''}>
             <div style="flex: 1;">
@@ -146,8 +168,8 @@ class FlashcardView {
             </div>
           </label>
 
-          <!-- 모드 5: 실생활 단어 학습 모드 (신설) -->
-          <label class="quiz-option-row" style="cursor: pointer; display: flex; align-items: flex-start; gap: 14px; border-color: rgba(251, 191, 36, 0.2); background: rgba(251, 191, 36, 0.02);">
+          <!-- 모드 5: 실생활 단어 학습 모드 -->
+          <label class="quiz-option-row" style="cursor: pointer; display: flex; align-items: flex-start; gap: 14px; border-color: rgba(251, 191, 36, 0.2); background: rgba(251, 191, Yellow, 0.02);">
             <input type="radio" name="learning-mode-select" value="word" ${this.orderMode === 'word' ? 'checked' : ''} style="margin-top: 5px; scale: 1.2; accent-color: var(--gold);">
             <div style="flex: 1;">
               <span class="option-row-label" style="font-size: 15px; font-weight: 800; display: block; color: var(--gold);"><i class="fa-solid fa-language"></i> 실생활 단어 전용 학습 모드 (총 1000단어)</span>
@@ -175,7 +197,6 @@ class FlashcardView {
     if (levelSelect) {
       levelSelect.addEventListener("change", (e) => {
         this.selectedLevel = parseInt(e.target.value);
-        // 드롭다운 변경 시 라디오 버튼도 자동으로 level 모드로 맞춰줌
         const levelRadio = document.querySelector('input[value="level"]');
         if (levelRadio) levelRadio.checked = true;
         this.orderMode = 'level';
@@ -192,6 +213,7 @@ class FlashcardView {
       startBtn.addEventListener("click", () => {
         this.isStarted = true;
         this.currentIndex = 0;
+        this.lastPlayedIndex = -1; // 진입 시 음성 락 해제
         this.render();
       });
     }
@@ -204,11 +226,11 @@ class FlashcardView {
     // 퇴실 헤더 공통 영역
     const headerTitleHTML = () => {
       let title = '';
-      if (this.orderMode === 'sequential') title = '<i class="fa-solid fa-arrow-down-1-9"></i> ID 순차 학습실';
-      else if (this.orderMode === 'level') title = `<i class="fa-solid fa-filter"></i> ${this.selectedLevel}단계 난이도 학습실`;
-      else if (this.orderMode === 'review_completed') title = '<i class="fa-solid fa-circle-check" style="color:var(--success);"></i> 완료 복습실';
-      else if (this.orderMode === 'review_incomplete') title = '<i class="fa-solid fa-circle-exclamation" style="color:var(--error);"></i> 미흡 복습실';
-      else if (this.orderMode === 'word') title = '<i class="fa-solid fa-language" style="color:var(--gold);"></i> 실생활 단어 학습실';
+      if (this.orderMode === 'sequential') title = '<i class="fa-solid fa-arrow-down-1-9"></i> 순차 학습';
+      else if (this.orderMode === 'level') title = `<i class="fa-solid fa-filter"></i> ${this.selectedLevel}단계 학습`;
+      else if (this.orderMode === 'review_completed') title = '<i class="fa-solid fa-circle-check" style="color:var(--success);"></i> 완료 복습';
+      else if (this.orderMode === 'review_incomplete') title = '<i class="fa-solid fa-circle-exclamation" style="color:var(--error);"></i> 미흡 복습';
+      else if (this.orderMode === 'word') title = '<i class="fa-solid fa-language" style="color:var(--gold);"></i> 단어 학습';
       return `<span style="font-weight: 800;">${title}</span>`;
     };
 
@@ -240,8 +262,6 @@ class FlashcardView {
 
     const card = this.filteredCards[this.currentIndex];
     const state = stateManager.get();
-    
-    // 카드 암기 완료 여부
     const isMemorized = state.progress[card.id]?.memorized || false;
     
     // 만약 실생활 단어 모드인 경우
@@ -250,15 +270,21 @@ class FlashcardView {
       return;
     }
 
-    // 일반 천자문 글자 카드 렌더링 (단어 박스 완전 제거 및 가독성 최적화)
+    // 일반 천자문 글자 카드 렌더링 (중앙에 스피커 버튼 신설 및 헤더 줄바꿈 완비)
     this.container.innerHTML = `
       <div class="flashcard-layout">
         
-        <!-- 상단 제어 바 -->
-        <div class="learning-controls">
+        <!-- 상단 제어 바 (좌: 모드선택, 중: 스피커 버튼, 우: 카드정보 & 퇴실) -->
+        <div class="learning-controls" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <div class="selector-group">
             ${headerTitleHTML()}
           </div>
+          
+          <!-- 신설: 오프라인 한국어 TTS 재생 스피커 버튼 -->
+          <button class="speaker-btn" id="fc-speaker-btn" title="한국어 TTS 음성 듣기">
+            <i class="fa-solid fa-volume-high"></i> TTS 듣기
+          </button>
+          
           <div style="display:flex; align-items:center; gap: 12px;">
             <div class="card-id" style="font-size: 13px;">
               카드: <span style="color: var(--secondary); font-weight: 800;">${this.currentIndex + 1}</span> / ${this.filteredCards.length}
@@ -273,7 +299,7 @@ class FlashcardView {
         <div class="card-scene" id="card-scene-btn" style="touch-action: pan-y;">
           <div class="flip-card" id="flip-card-body">
             
-            <!-- 카드 앞면 (한자만 노출) -->
+            <!-- 카드 앞면 (한자만 노출 - 터치/스와이프 시 1회 자동 음성 독송) -->
             <div class="card-face front">
               <div class="card-header-badge">
                 <span class="card-id">ID #${card.id.toString().padStart(4, '0')}</span>
@@ -289,7 +315,7 @@ class FlashcardView {
               </div>
             </div>
             
-            <!-- 카드 뒷면 (해설 정보만 노출 - 단어 박스 제거) -->
+            <!-- 카드 뒷면 (해설 정보만 노출 - 음, 뜻, 획수) -->
             <div class="card-face back">
               <div class="card-header-badge">
                 <span class="card-id">ID #${card.id.toString().padStart(4, '0')}</span>
@@ -333,11 +359,17 @@ class FlashcardView {
 
     this.bindEvents();
     this.bindGestureEvents();
+    
+    // [1회 자동 재생 작동] 한자 카드 앞면 활성화 시점에 훈음 즉시 재생 (1회 제한)
+    if (this.currentIndex !== this.lastPlayedIndex) {
+      this.lastPlayedIndex = this.currentIndex;
+      const speakText = `${card.meaning} ${card.sound}`;
+      this.speakKorean(speakText);
+    }
   }
 
   // 3. 실생활 단어 모드 렌더링 (Word Mode Room)
   renderWordModeRoom(card, isMemorized, headerTitleHTML) {
-    // 실생활 단어 매칭 데이터 가져오기
     const wordData = ALL_WORD_DATA.find(w => w.id === card.id) || {
       wordHanja: card.hanja + '物',
       wordHangul: card.sound + '물',
@@ -347,11 +379,17 @@ class FlashcardView {
     this.container.innerHTML = `
       <div class="flashcard-layout">
         
-        <!-- 상단 제어 바 -->
-        <div class="learning-controls">
+        <!-- 상단 제어 바 (스피커 정중앙 신설 및 반응형) -->
+        <div class="learning-controls" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <div class="selector-group">
             ${headerTitleHTML()}
           </div>
+          
+          <!-- 신설: 오프라인 한국어 TTS 재생 스피커 버튼 -->
+          <button class="speaker-btn" id="fc-speaker-btn" title="한국어 TTS 음성 듣기">
+            <i class="fa-solid fa-volume-high"></i> TTS 듣기
+          </button>
+          
           <div style="display:flex; align-items:center; gap: 12px;">
             <div class="card-id" style="font-size: 13px;">
               단어: <span style="color: var(--gold); font-weight: 800;">${this.currentIndex + 1}</span> / ${this.filteredCards.length}
@@ -366,7 +404,7 @@ class FlashcardView {
         <div class="card-scene" id="card-scene-btn" style="touch-action: pan-y;">
           <div class="flip-card" id="flip-card-body">
             
-            <!-- 카드 앞면 (단어 한자 노출) -->
+            <!-- 카드 앞면 (단어 한자 노출 - 즉시 1회 단어 한글 소리 낭독) -->
             <div class="card-face front" style="background: linear-gradient(145deg, #1C1938, #0D0F1F); border-color: rgba(251, 191, 36, 0.15);">
               <div class="card-header-badge">
                 <span class="card-id">WORD ID #${card.id.toString().padStart(4, '0')}</span>
@@ -427,6 +465,12 @@ class FlashcardView {
 
     this.bindEvents();
     this.bindGestureEvents();
+    
+    // [1회 자동 재생 작동] 단어 카드 앞면 활성화 시점에 단어 낭독 (1회 제한)
+    if (this.currentIndex !== this.lastPlayedIndex) {
+      this.lastPlayedIndex = this.currentIndex;
+      this.speakKorean(wordData.wordHangul);
+    }
   }
 
   // UI 조작 이벤트 바인딩
@@ -437,6 +481,25 @@ class FlashcardView {
     const nextBtn = document.getElementById("fc-next-btn");
     const memorizedBtn = document.getElementById("fc-memorized-btn");
     const exitBtn = document.getElementById("fc-exit-btn");
+    
+    // 신설: 수동 스피커 재생 버튼
+    const speakerBtn = document.getElementById("fc-speaker-btn");
+
+    if (speakerBtn) {
+      speakerBtn.addEventListener("click", (e) => {
+        e.stopPropagation(); // 카드 플립 간섭 방지
+        const card = this.filteredCards[this.currentIndex];
+        if (!card) return;
+        
+        if (this.orderMode === 'word') {
+          const wordData = ALL_WORD_DATA.find(w => w.id === card.id) || { wordHangul: card.sound + '물' };
+          this.speakKorean(wordData.wordHangul);
+        } else {
+          const speakText = `${card.meaning} ${card.sound}`;
+          this.speakKorean(speakText);
+        }
+      });
+    }
 
     // 퇴실 버튼
     if (exitBtn) {
@@ -449,8 +512,9 @@ class FlashcardView {
     // 카드 플립 터치 토글
     if (cardScene && flipCard) {
       cardScene.addEventListener("click", (e) => {
-        // 드래그/스와이프 이동 시에는 클릭 탭 플립 차단
         if (this.isDragging) return;
+        
+        // 카드 뒤집기 (앞면 -> 뒷면 / 뒷면 -> 앞면)
         flipCard.classList.toggle("flipped");
       });
     }
@@ -476,10 +540,8 @@ class FlashcardView {
         const card = this.filteredCards[this.currentIndex];
         const state = stateManager.get();
         
-        // 이미 암기 완료된 것인지 검사
         const alreadyMemorized = state.progress[card.id]?.memorized || false;
         
-        // 학습 진행 상태 기록
         const newProgress = { ...state.progress };
         newProgress[card.id] = {
           memorized: true,
@@ -488,7 +550,6 @@ class FlashcardView {
         
         stateManager.update({ progress: newProgress });
 
-        // 최초 1회 첫 암기 시에만 포인트 지급 (+0.2P)
         if (!alreadyMemorized) {
           stateManager.addPoints(0.2, false);
           showSuccessToast(`암기 완료! +0.2P 적립 (현재: ${stateManager.get().points.toFixed(1)}P)`);
@@ -496,10 +557,8 @@ class FlashcardView {
           showInfoToast("이미 암기 완료 처리된 천자문 카드입니다.");
         }
 
-        // 복습 모드 렌더링 갱신 시 인덱스 에러 방지용 자동 카운팅
         setTimeout(() => {
           if (this.orderMode === 'review_incomplete') {
-            // 미흡 복습인 경우, 암기 완료 처리했으므로 필터링에서 카드가 제거됨 -> 인덱스 증가 없이 재렌더링
             this.render();
           } else {
             if (this.currentIndex < this.filteredCards.length - 1) {
@@ -522,7 +581,7 @@ class FlashcardView {
     const dragStart = (x, y) => {
       this.startX = x;
       this.startY = y;
-      this.isDragging = false; // 제스처 초기값 세팅
+      this.isDragging = false;
     };
 
     // 공통 드래그 무브 변위 계산
@@ -530,10 +589,8 @@ class FlashcardView {
       const deltaX = x - this.startX;
       const deltaY = y - this.startY;
       
-      // 가로 변위가 세로보다 확연히 크면 가로 드래그로 규정
       if (Math.abs(deltaX) > 15 && Math.abs(deltaX) > Math.abs(deltaY)) {
         this.isDragging = true;
-        // PC 마우스 드래그 느낌이 나도록 미세하게 카드 가로 실시간 이동 변위 적용
         flipCard.style.transform = `translateX(${deltaX * 0.35}px) rotateY(${flipCard.classList.contains("flipped") ? '180deg' : '0deg'})`;
         flipCard.classList.add("dragging");
       }
@@ -542,10 +599,10 @@ class FlashcardView {
     // 공통 드래그 해제에 따른 액션 바인딩
     const dragEnd = (x) => {
       flipCard.classList.remove("dragging");
-      flipCard.style.transform = ''; // 변위 원복
+      flipCard.style.transform = ''; 
 
       const deltaX = x - this.startX;
-      const swipeThreshold = 65; // 드래그 65px 이상을 방향 넘기기로 판단
+      const swipeThreshold = 65; 
 
       if (this.isDragging && Math.abs(deltaX) > swipeThreshold) {
         if (deltaX > 0) {
@@ -571,7 +628,6 @@ class FlashcardView {
         }
       }
       
-      // 짧은 딜레이 후 터치 탭에 의한 플립이 원치 않게 연달아 터지는 것 완전 가딩
       setTimeout(() => {
         this.isDragging = false;
       }, 50);
@@ -595,7 +651,7 @@ class FlashcardView {
       document.addEventListener("mouseup", mouseUpHandler);
     });
 
-    // 모바일 터치 리스너 바인딩 (수동 제스처 터치 액션 연결)
+    // 모바일 터치 리스너 바인딩
     cardScene.addEventListener("touchstart", (e) => {
       const touch = e.touches[0];
       dragStart(touch.clientX, touch.clientY);
