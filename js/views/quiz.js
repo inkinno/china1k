@@ -34,7 +34,7 @@ class QuizView {
     const state = stateManager.get();
     
     // 비즈니스 룰: 한 번이라도 열람/학습하여 '학습 이력'이 생긴 한자들만 시험 범위로 구성
-    const learnedIds = Object.keys(state.progress).map(id => parseInt(id));
+    const learnedIds = Object.keys(state.progress || {}).map(id => parseInt(id));
     const pool = ALL_CHUNJA_DATA.filter(c => learnedIds.includes(c.id));
 
     if (pool.length < 5) {

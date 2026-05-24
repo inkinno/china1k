@@ -1295,6 +1295,7 @@ html, body {
   flex-direction: column;
   gap: 10px;
   z-index: 1100;
+  pointer-events: none; /* 빈 영역 마우스 클릭 통과 허용 */
 }
 .toast-card {
   background: #1E293B;
@@ -1312,6 +1313,11 @@ html, body {
   transform: translateX(120%);
   animation: slideIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
   transition: opacity 0.3s, transform 0.3s;
+  pointer-events: auto; /* 카드 자체는 클릭 반응 허용 */
+}
+/* 전역 공통 유틸리티 - 단독 hidden 클래스 */
+.hidden {
+  display: none !important;
 }
 .toast-card.success {
   border-left-color: var(--success);

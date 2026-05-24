@@ -15,11 +15,11 @@ class DashboardView {
     
     // 비즈니스 통계 데이터 가공
     const totalHanja = ALL_CHUNJA_DATA.length;
-    const memorizedCount = Object.values(state.progress).filter(p => p.memorized).length;
+    const memorizedCount = Object.values(state.progress || {}).filter(p => p && p.memorized).length;
     const progressRate = totalHanja > 0 ? ((memorizedCount / totalHanja) * 100).toFixed(1) : 0;
     
-    const wrongCount = Object.keys(state.wrongNote).length;
-    const streakShields = state.shop.streakShields || 0;
+    const wrongCount = Object.keys(state.wrongNote || {}).length;
+    const streakShields = state.shop?.streakShields || 0;
 
     // 배지 데이터 정의 (게이미피케이션)
     const BADGES = [
@@ -139,14 +139,14 @@ class DashboardView {
               상점에서 미리 선구매한 귀여운 한자 정령 펫의 꾸미기 데코레이션 아이템 목록입니다.
             </p>
             
-            ${state.shop.purchasedPetSlots.length === 0 ? `
+            ${(!state.shop?.purchasedPetSlots || state.shop.purchasedPetSlots.length === 0) ? `
               <div style="text-align: center; padding: 24px 0; color: var(--text-muted); border: 1px dashed var(--border-glass); border-radius: 12px; font-size: 12px;">
                 <i class="fa-solid fa-box-open" style="font-size: 28px; margin-bottom: 8px; opacity: 0.5;"></i>
                 <div>아직 구매한 펫 장비가 없습니다.</div>
               </div>
             ` : `
               <div style="display: flex; flex-direction: column; gap: 8px;">
-                ${state.shop.purchasedPetSlots.map(item => `
+                ${(state.shop?.purchasedPetSlots || []).map(item => `
                   <div style="background: rgba(138,43,226,0.05); border: 1px solid rgba(138,43,226,0.15); border-radius: 10px; padding: 8px 12px; font-size: 12px; display: flex; align-items: center; gap: 8px; font-weight: 700;">
                     <i class="fa-solid fa-shirt" style="color: var(--primary);"></i>
                     <span>${item}</span>

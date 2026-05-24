@@ -22,7 +22,7 @@ class WrongnoteView {
   // 화면 렌더링
   render() {
     const state = stateManager.get();
-    const wrongIds = Object.keys(state.wrongNote).map(id => parseInt(id));
+    const wrongIds = Object.keys(state.wrongNote || {}).map(id => parseInt(id));
     
     // 15개 미만 여부 더블 체크 잠금 화면
     if (wrongIds.length < 15 && !this.isPlaying) {

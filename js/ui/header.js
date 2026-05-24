@@ -63,16 +63,27 @@ class HeaderController {
   // 전역 상태 변화 실시간 감지 및 렌더링
   listenToState() {
     stateManager.subscribe((oldState, newState) => {
+      if (!newState) return;
+      const old = oldState || {};
+
       // 1. 포인트, Streak, 배지 실시간 동기화
-      if (oldState.points !== newState.points) {
-        this.pointsEl.textContent = newState.points.toFixed(1);
+      const oldPoints = old.points !== undefined ? old.points : 0.0;
+      const newPoints = newState.points !== undefined ? newState.points : 0.0;
+      if (oldPoints !== newPoints) {
+        this.pointsEl.textContent = typeof newPoints === 'number' ? newPoints.toFixed(1) : "0.0";
         this.animateIncrement(this.pointsEl);
       }
-      if (oldState.streak !== newState.streak) {
-        this.streakEl.textContent = newState.streak;
+
+      const oldStreak = old.streak !== undefined ? old.streak : 0;
+      const newStreak = newState.streak !== undefined ? newState.streak : 0;
+      if (oldStreak !== newStreak) {
+        this.streakEl.textContent = newStreak;
       }
-      if (oldState.badges.length !== newState.badges.length) {
-        this.badgesEl.textContent = newState.badges.length;
+
+      const oldBadgesLen = old.badges ? old.badges.length : 0;
+      const newBadgesLen = newState.badges ? newState.badges.length : 0;
+      if (oldBadgesLen !== newBadgesLen) {
+        this.badgesEl.textContent = newBadgesLen;
       }
 
       // 2. 동기화 데이터 변경점 Dirty 여부 체크 배지 갱신
@@ -86,35 +97,37 @@ class HeaderController {
       }
 
       // 3. 탭 버튼 Active 상태 동기화 및 오답노트 잠금 해제 제어
-      if (oldState.currentView !== newState.currentView) {
+      if (old.currentView !== newState.currentView) {
         this.updateActiveTabUI(newState.currentView);
       }
 
       // 오답노트 해제 상태 상시 검사
-      const wrongCount = Object.keys(newState.wrongNote).length;
+      const wrongCount = newState.wrongNote ? Object.keys(newState.wrongNote).length : 0;
       const wrongnoteTab = document.getElementById("tab-wrongnote");
-      if (wrongCount >= 15) {
-        if (wrongnoteTab.classList.contains("locked")) {
-          wrongnoteTab.classList.remove("locked");
-          const lockInd = wrongnoteTab.querySelector(".lock-indicator");
-          if (lockInd) lockInd.remove();
-          wrongnoteTab.title = "오답노트 학습 가능";
-        }
-      } else {
-        if (!wrongnoteTab.classList.contains("locked")) {
-          wrongnoteTab.classList.add("locked");
-          if (!wrongnoteTab.querySelector(".lock-indicator")) {
-            const span = document.createElement("span");
-            span.className = "lock-indicator";
-            span.innerHTML = '<i class="fa-solid fa-lock"></i>';
-            wrongnoteTab.appendChild(span);
+      if (wrongnoteTab) {
+        if (wrongCount >= 15) {
+          if (wrongnoteTab.classList.contains("locked")) {
+            wrongnoteTab.classList.remove("locked");
+            const lockInd = wrongnoteTab.querySelector(".lock-indicator");
+            if (lockInd) lockInd.remove();
+            wrongnoteTab.title = "오답노트 학습 가능";
           }
-          wrongnoteTab.title = "오답 15개 이상 누적 시 잠금 해제";
+        } else {
+          if (!wrongnoteTab.classList.contains("locked")) {
+            wrongnoteTab.classList.add("locked");
+            if (!wrongnoteTab.querySelector(".lock-indicator")) {
+              const span = document.createElement("span");
+              span.className = "lock-indicator";
+              span.innerHTML = '<i class="fa-solid fa-lock"></i>';
+              wrongnoteTab.appendChild(span);
+            }
+            wrongnoteTab.title = "오답 15개 이상 누적 시 잠금 해제";
+          }
         }
       }
 
       // 4. 구글 로그인 상태 렌더링
-      if (oldState.user !== newState.user) {
+      if (old.user !== newState.user) {
         if (newState.user) {
           this.authActionBtn.className = "auth-btn logout";
           this.authActionBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> 로그아웃';
@@ -164,15 +177,15 @@ class HeaderController {
 
   // 현재 로컬 데이터 상태가 DB 최종 상태와 다른지 단순 JSON 비교 검출 (Dirty Checking)
   checkIfDirty(state) {
-    if (!state.lastLoadedData) return false;
+    if (!state || !state.lastLoadedData) return false;
     
     const currentSnapshot = JSON.stringify({
-      points: state.points,
-      streak: state.streak,
-      badges: state.badges,
-      progress: state.progress,
-      wrongNote: state.wrongNote,
-      shop: state.shop
+      points: state.points !== undefined ? state.points : 0.0,
+      streak: state.streak !== undefined ? state.streak : 0,
+      badges: state.badges || [],
+      progress: state.progress || {},
+      wrongNote: state.wrongNote || {},
+      shop: state.shop || { streakShields: 0, purchasedPetSlots: [] }
     });
     
     return currentSnapshot !== state.lastLoadedData;

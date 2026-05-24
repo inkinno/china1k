@@ -195,24 +195,34 @@ class DatabaseManager {
       if (docSnap.exists()) {
         const data = docSnap.data();
         
-        // 전역 상태에 로드된 데이터 업데이트
+        // 전역 상태에 로드된 데이터 업데이트 (방어적 구조 안전장치)
+        const loadedPoints = parseFloat(data.points !== undefined && data.points !== null ? data.points : 0.0);
+        const loadedStreak = parseInt(data.streak !== undefined && data.streak !== null ? data.streak : 0);
+        const loadedBadges = Array.isArray(data.badges) ? data.badges : [];
+        const loadedProgress = data.progress || {};
+        const loadedWrongNote = data.wrongNote || {};
+        const loadedShop = {
+          streakShields: data.shop?.streakShields !== undefined && data.shop?.streakShields !== null ? data.shop.streakShields : 0,
+          purchasedPetSlots: Array.isArray(data.shop?.purchasedPetSlots) ? data.shop.purchasedPetSlots : []
+        };
+
         stateManager.update({
-          points: parseFloat(data.points || 0.0),
-          streak: parseInt(data.streak || 0),
-          badges: data.badges || [],
-          progress: data.progress || {},
-          wrongNote: data.wrongNote || {},
-          shop: data.shop || { streakShields: 0, purchasedPetSlots: [] }
+          points: loadedPoints,
+          streak: loadedStreak,
+          badges: loadedBadges,
+          progress: loadedProgress,
+          wrongNote: loadedWrongNote,
+          shop: loadedShop
         });
 
         // 로드 성공 시 스냅샷 문자열 백업 (Dirty Checking의 기준점)
         const snapshotStr = JSON.stringify({
-          points: stateManager.state.points,
-          streak: stateManager.state.streak,
-          badges: stateManager.state.badges,
-          progress: stateManager.state.progress,
-          wrongNote: stateManager.state.wrongNote,
-          shop: stateManager.state.shop
+          points: loadedPoints,
+          streak: loadedStreak,
+          badges: loadedBadges,
+          progress: loadedProgress,
+          wrongNote: loadedWrongNote,
+          shop: loadedShop
         });
         stateManager.update({ lastLoadedData: snapshotStr });
         

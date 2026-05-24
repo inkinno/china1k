@@ -20,6 +20,26 @@
   
   <!-- 메인 스타일시트 -->
   <link rel="stylesheet" href="index.css">
+  <!-- 디버깅용 전역 에러 오버레이 모니터 -->
+  <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+      const div = document.createElement('div');
+      div.style.position = 'fixed';
+      div.style.top = '0';
+      div.style.left = '0';
+      div.style.width = '100vw';
+      div.style.backgroundColor = 'rgba(239, 68, 68, 0.95)';
+      div.style.color = 'white';
+      div.style.padding = '16px';
+      div.style.zIndex = '99999';
+      div.style.fontFamily = 'monospace';
+      div.style.fontSize = '14px';
+      div.style.whiteSpace = 'pre-wrap';
+      div.innerHTML = '<strong>[JS Runtime Error]</strong><br>' + message + '<br>at ' + source + ':' + lineno + ':' + colno;
+      document.body.appendChild(div);
+      return false;
+    };
+  </script>
 </head>
 <body>
 
