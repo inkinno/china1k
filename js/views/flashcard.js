@@ -4,6 +4,7 @@
 import stateManager from "../state.js";
 import { ALL_CHUNJA_DATA, ALL_WORD_DATA } from "../data/index.js";
 import { showSuccessToast, showInfoToast } from "../ui/toast.js";
+import flashcardWritingView from "./flashcard_writing.js"; // 신설: 획따라 쓰기 연습장 모듈 위임용
 
 class FlashcardView {
   constructor() {
@@ -12,7 +13,7 @@ class FlashcardView {
     // 로컬 상태 관리
     this.currentIndex = 0;
     this.filteredCards = [];
-    this.orderMode = 'sequential';  // 'sequential'(순차), 'level'(단계별), 'review_completed'(완료복습), 'review_incomplete'(미흡복습), 'word'(실생활단어)
+    this.orderMode = 'sequential';  // 'sequential'(순차), 'level'(단계별), 'review_completed'(완료복습), 'review_incomplete'(미흡복습), 'word'(실생활단어), 'writing'(획따라쓰기)
     this.selectedLevel = 1;         // 수준 1~5
     
     // 학습실 입장 제어 상태
@@ -83,7 +84,14 @@ class FlashcardView {
     if (!this.isStarted) {
       this.renderStartRoom();
     } else {
-      this.renderLearningRoom();
+      if (this.orderMode === 'writing') {
+        flashcardWritingView.render(this.container, () => {
+          this.isStarted = false;
+          this.render();
+        });
+      } else {
+        this.renderLearningRoom();
+      }
     }
   }
 
@@ -177,6 +185,44 @@ class FlashcardView {
             </div>
           </label>
 
+          <!-- 모드 6: ✍️ 천자문 획따라 쓰기 연습 모드 (신설) -->
+          <label class="quiz-option-row" style="cursor: pointer; display: flex; align-items: flex-start; gap: 16px; padding: 18px; border: 1px solid rgba(138, 43, 226, 0.25); border-radius: 16px; background: rgba(138, 43, 226, 0.02); transition: var(--transition-smooth);">
+            <input type="radio" name="learning-mode-select" value="writing" ${this.orderMode === 'writing' ? 'checked' : ''} style="margin-top: 4px; width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+            <div style="flex: 1; width: 100%;">
+              <span class="option-row-label" style="font-size: 15.5px; font-weight: 800; display: block; color: #A78BFA;"><i class="fa-solid fa-file-signature" style="margin-right: 6px;"></i> 천자문 획따라 쓰기 연습 모드</span>
+              <span style="font-size: 12.5px; color: var(--text-muted); display: block; margin-top: 4px; line-height: 1.4;">반투명 글자 가이드를 터치/드래그하여 획순을 익히는 강력한 필기 연습실입니다.</span>
+              
+              <!-- 획쓰기 서브 옵션 패널 (라디오 선택 시 활성/비활성 연동) -->
+              <div id="writing-sub-options" style="margin-top: 12px; padding: 12px; background: rgba(0,0,0,0.25); border: 1px solid var(--border-glass); border-radius: 12px; display: flex; flex-direction: column; gap: 10px;">
+                <!-- 1. 배열 방식 분기 (순차 vs 랜덤) -->
+                <div style="display: flex; gap: 16px; border-bottom: 1px dashed var(--border-glass); padding-bottom: 8px;">
+                  <label style="cursor: pointer; font-size: 12.5px; display: flex; align-items: center; gap: 6px; font-weight: 700;">
+                    <input type="radio" name="writing-order-select" value="sequential" checked style="accent-color: var(--primary);"> 천자문 순서대로
+                  </label>
+                  <label style="cursor: pointer; font-size: 12.5px; display: flex; align-items: center; gap: 6px; font-weight: 700;">
+                    <input type="radio" name="writing-order-select" value="random" style="accent-color: var(--primary);"> 무작위 랜덤
+                  </label>
+                </div>
+                
+                <!-- 2. 순서대로일 때의 시작 위치 옵션 -->
+                <div id="writing-start-branch" style="display: flex; flex-direction: column; gap: 8px;">
+                  <label style="cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 8px; color: var(--text-main);">
+                    <input type="radio" name="writing-start-mode" value="continue" checked style="accent-color: var(--primary);">
+                    <span>기존 마지막 번호부터 이어 쓰기 (<b style="color: var(--secondary);">ID #${state.lastWritingId || 1}</b>)</span>
+                  </label>
+                  <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                    <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; color: var(--text-main); flex-shrink:0;">
+                      <input type="radio" name="writing-start-mode" value="custom" style="accent-color: var(--primary);">
+                      <span>원하는 시작 번호 입력:</span>
+                    </label>
+                    <input type="number" id="writing-start-number" min="1" max="1000" value="${state.lastWritingId || 1}" style="width: 70px; padding: 4px 6px; background: rgba(15,23,42,0.6); border: 1px solid var(--border-glass); border-radius: 6px; color: var(--text-main); font-size: 12px; font-weight: 700; text-align: center; outline: none;" disabled>
+                    <span style="color: var(--text-muted); font-size: 11px;">(1~1000)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </label>
+
         </div>
 
         <button class="start-quiz-btn" id="fc-start-action-btn" style="width: 100%; padding: 16px; border: none; border-radius: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; font-size: 16px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: var(--transition-smooth); box-shadow: var(--shadow-primary);">
@@ -193,6 +239,37 @@ class FlashcardView {
     const startBtn = document.getElementById("fc-start-action-btn");
     const levelSelect = document.getElementById("room-level-select");
     const radioButtons = document.querySelectorAll('input[name="learning-mode-select"]');
+
+    // 획쓰기 관련 엘리먼트 수집 (Writing Options Interaction)
+    const writingOrderRadios = document.querySelectorAll('input[name="writing-order-select"]');
+    const writingStartRadios = document.querySelectorAll('input[name="writing-start-mode"]');
+    const writingStartNumInput = document.getElementById("writing-start-number");
+    const writingStartBranch = document.getElementById("writing-start-branch");
+
+    // 1. 획쓰기 순차 vs 랜덤 배열 제어 연동
+    writingOrderRadios.forEach(r => {
+      r.addEventListener("change", (e) => {
+        if (e.target.value === 'random') {
+          writingStartBranch.style.opacity = '0.4';
+          writingStartBranch.style.pointerEvents = 'none';
+        } else {
+          writingStartBranch.style.opacity = '1';
+          writingStartBranch.style.pointerEvents = 'auto';
+        }
+      });
+    });
+
+    // 2. 순차 모드 시 이어쓰기 vs 지정 번호 연동
+    writingStartRadios.forEach(r => {
+      r.addEventListener("change", (e) => {
+        if (e.target.value === 'custom') {
+          writingStartNumInput.disabled = false;
+          writingStartNumInput.focus();
+        } else {
+          writingStartNumInput.disabled = true;
+        }
+      });
+    });
 
     if (levelSelect) {
       levelSelect.addEventListener("change", (e) => {
@@ -211,6 +288,30 @@ class FlashcardView {
 
     if (startBtn) {
       startBtn.addEventListener("click", () => {
+        // 획따라 쓰기 모드 진입 분기 제어
+        if (this.orderMode === 'writing') {
+          const isRandom = document.querySelector('input[name="writing-order-select"]:checked').value === 'random';
+          let startId = 1;
+          
+          if (!isRandom) {
+            const startMode = document.querySelector('input[name="writing-start-mode"]:checked').value;
+            if (startMode === 'custom') {
+              const val = parseInt(writingStartNumInput.value);
+              if (isNaN(val) || val < 1 || val > 1000) {
+                alert("시작 번호는 1부터 1000 사이의 숫자여야 합니다!");
+                writingStartNumInput.focus();
+                return;
+              }
+              startId = val;
+            } else {
+              startId = stateManager.get().lastWritingId || 1;
+            }
+          }
+          
+          // 획쓰기 전용 모듈에 파라미터 세팅 및 시작
+          flashcardWritingView.setupMode(isRandom, startId);
+        }
+
         this.isStarted = true;
         this.currentIndex = 0;
         this.lastPlayedIndex = -1; // 진입 시 음성 락 해제

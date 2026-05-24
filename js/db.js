@@ -201,6 +201,7 @@ class DatabaseManager {
         const loadedBadges = Array.isArray(data.badges) ? data.badges : [];
         const loadedProgress = data.progress || {};
         const loadedWrongNote = data.wrongNote || {};
+        const loadedLastWritingId = parseInt(data.lastWritingId !== undefined && data.lastWritingId !== null ? data.lastWritingId : 1);
         const loadedShop = {
           streakShields: data.shop?.streakShields !== undefined && data.shop?.streakShields !== null ? data.shop.streakShields : 0,
           purchasedPetSlots: Array.isArray(data.shop?.purchasedPetSlots) ? data.shop.purchasedPetSlots : []
@@ -212,6 +213,7 @@ class DatabaseManager {
           badges: loadedBadges,
           progress: loadedProgress,
           wrongNote: loadedWrongNote,
+          lastWritingId: loadedLastWritingId,
           shop: loadedShop
         });
 
@@ -222,6 +224,7 @@ class DatabaseManager {
           badges: loadedBadges,
           progress: loadedProgress,
           wrongNote: loadedWrongNote,
+          lastWritingId: loadedLastWritingId,
           shop: loadedShop
         });
         stateManager.update({ lastLoadedData: snapshotStr });
@@ -235,6 +238,7 @@ class DatabaseManager {
           badges: [],
           progress: {},
           wrongNote: {},
+          lastWritingId: 1,
           shop: { streakShields: 0, purchasedPetSlots: [] }
         });
         stateManager.update({ lastLoadedData: snapshotStr });
@@ -268,6 +272,7 @@ class DatabaseManager {
         badges: state.badges,
         progress: state.progress,
         wrongNote: state.wrongNote,
+        lastWritingId: state.lastWritingId || 1,
         shop: state.shop
       });
 
@@ -288,6 +293,7 @@ class DatabaseManager {
         badges: state.badges,
         progress: state.progress,
         wrongNote: state.wrongNote,
+        lastWritingId: state.lastWritingId || 1,
         shop: state.shop,
         lastSavedAt: new Date().toISOString()
       };

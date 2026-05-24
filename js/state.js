@@ -24,6 +24,7 @@ class StateManager {
       currentView: 'dashboard',    // 현재 활성화된 탭 ID
       combo: 0,                    // 실시간 퀴즈 정답 콤보 카운트
       maxCombo: 0,                 // 역대 최고 콤보 수
+      lastWritingId: 1,            // 신설: 획따라 쓰기 연습 모드의 마지막 학습 완료 한자 ID (이어쓰기 기능 지원)
       lastLoadedData: null         // Dirty Checking용 데이터베이스 최종 로드 스냅샷 (JSON)
     };
   }
