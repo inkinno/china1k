@@ -1341,22 +1341,48 @@ html, body {
   to { transform: translateY(-4px); }
 }
 
-/* 13. 미디어 쿼리 (반응형 세부 조절) */
+/* 13. 미디어 쿼리 (반응형 세부 조절 & 겹침 차단 최적화) */
 @media (max-width: 900px) {
   .header-container {
     width: 95%;
   }
   .navigation-tabs {
     position: fixed;
-    bottom: 20px;
+    bottom: 12px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 99;
+    z-index: 999;
     box-shadow: var(--shadow-lg);
     background: rgba(8, 12, 20, 0.95);
-    backdrop-filter: blur(10px);
-    width: 90%;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    width: 94%;
     justify-content: space-around;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 6px;
+  }
+  .tab-btn {
+    padding: 10px 4px;
+    font-size: 11px;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    justify-content: center;
+    border-radius: 12px;
+    font-weight: 700;
+  }
+  .tab-btn.active {
+    background: linear-gradient(135deg, var(--gold), #FBBF24);
+    box-shadow: var(--shadow-gold);
+    color: var(--text-dark);
+  }
+  .tab-btn.locked {
+    opacity: 0.4;
+  }
+  .lock-indicator {
+    top: -2px;
+    right: 15%;
   }
   .dashboard-grid {
     grid-template-columns: 1fr;
@@ -1367,19 +1393,101 @@ html, body {
   .shop-items-grid {
     grid-template-columns: 1fr;
   }
-  .tab-btn {
-    padding: 10px;
-    font-size: 12px;
+  .main-content {
+    margin: 20px auto 100px auto; /* 하단 탭 가림 방지 여백 */
+    min-height: calc(100vh - 200px);
   }
 }
 
-@media (max-width: 480px) {
+/* 초소형 모바일 해상도 기기 대응 및 가로 겹침 완전 해결 */
+@media (max-width: 600px) {
+  .sticky-header {
+    height: auto;
+    padding: 10px 0;
+    position: relative;
+  }
+  .header-container {
+    flex-direction: column;
+    gap: 8px;
+    width: 95%;
+    align-items: center;
+  }
+  .logo-area {
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 2px;
+  }
+  .logo-text {
+    font-size: 18px;
+  }
+  .user-status-widget {
+    width: 100%;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .sync-controller {
+    gap: 4px;
+  }
+  .sync-badge {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+  .save-btn {
+    padding: 4px 8px;
+    font-size: 10px;
+    border-radius: 10px;
+  }
+  .profile-summary {
+    padding: 3px 8px 3px 4px;
+    gap: 4px;
+    border-radius: 20px;
+  }
+  .avatar-area {
+    width: 24px;
+    height: 24px;
+  }
+  .status-metrics {
+    gap: 6px;
+  }
+  .metric-item {
+    font-size: 10px;
+    gap: 2px;
+  }
+  .auth-btn {
+    padding: 5px 10px;
+    font-size: 10.5px;
+    border-radius: 15px;
+  }
+  
   .card-scene {
     width: 100%;
     max-width: 320px;
-    height: 440px;
+    height: 430px;
   }
   .giant-hanja {
-    font-size: 90px;
+    font-size: 80px;
+  }
+  .card-face {
+    padding: 20px;
+  }
+  .korean-sound {
+    font-size: 22px;
   }
 }
+
+/* 드래그 및 슬라이드 트랙킹 모션 보정 클래스 */
+.flip-card.dragging {
+  transition: none !important;
+}
+.flip-card.swipe-left-anim {
+  transform: translateX(-150%) rotateY(0deg);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease !important;
+}
+.flip-card.swipe-right-anim {
+  transform: translateX(150%) rotateY(0deg);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease !important;
+}
+
+

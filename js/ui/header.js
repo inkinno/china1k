@@ -44,11 +44,11 @@ class HeaderController {
     // 구글 로그인 / 로그아웃 액션
     this.authActionBtn.addEventListener("click", () => {
       const { user } = stateManager.get();
-      if (user) {
-        // 로그아웃 요청 발송 (이벤트 위임)
+      if (user && !user.isAnonymous) {
+        // 실제 구글 계정으로 로그인한 상태일 때만 -> 로그아웃
         document.dispatchEvent(new CustomEvent("firebase-logout-request"));
       } else {
-        // 로그인 요청 발송
+        // 미인증 상태이거나 익명 세션 상태일 때 -> 정식 구글 로그인 연동 시도
         document.dispatchEvent(new CustomEvent("firebase-login-request"));
       }
     });
@@ -128,11 +128,13 @@ class HeaderController {
 
       // 4. 구글 로그인 상태 렌더링
       if (old.user !== newState.user) {
-        if (newState.user) {
+        if (newState.user && !newState.user.isAnonymous) {
+          // 정식 구글 사용자일 때만 로그아웃 버튼 노출
           this.authActionBtn.className = "auth-btn logout";
           this.authActionBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> 로그아웃';
           this.userAvatar.src = newState.user.photoURL || `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${newState.user.uid}`;
         } else {
+          // 익명 유저이거나 로그아웃 상태일 때는 구글 로그인 버튼 고정 노출
           this.authActionBtn.className = "auth-btn login";
           this.authActionBtn.innerHTML = '<i class="fa-brands fa-google"></i> 로그인';
           this.userAvatar.src = "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=china1k";
