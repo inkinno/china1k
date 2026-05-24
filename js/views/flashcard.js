@@ -97,32 +97,32 @@ class FlashcardView {
     const incompleteCards = ALL_CHUNJA_DATA.filter(c => !progress[c.id] || progress[c.id]?.memorized === false);
 
     this.container.innerHTML = `
-      <div class="quiz-starter-card" style="max-width: 720px; width: 100%; margin: 30px auto; text-align: left;">
-        <div style="text-align: center; margin-bottom: 24px;">
-          <i class="fa-solid fa-door-open starter-icon" style="color: var(--secondary);"></i>
-          <h2 style="font-size: 24px; font-weight: 850;">천자문 마스터 학습 대기실</h2>
-          <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">나에게 맞는 스마트 학습 모드를 선택하고 입장하세요.</p>
+      <div class="quiz-starter-card" style="max-width: 720px; width: 100%; margin: 30px auto; text-align: left; background: var(--bg-surface-glass); border: 1px solid var(--border-glass); border-radius: 24px; padding: 30px; box-shadow: var(--shadow-lg);">
+        <div style="text-align: center; margin-bottom: 28px;">
+          <i class="fa-solid fa-door-open starter-icon" style="color: var(--secondary); font-size: 48px; margin-bottom: 12px; filter: drop-shadow(0 4px 12px rgba(0,242,254,0.3));"></i>
+          <h2 style="font-size: 26px; font-weight: 850; letter-spacing: -0.5px; background: linear-gradient(135deg, #FFF, #E2E8F0); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">천자문 마스터 학습 대기실</h2>
+          <p style="font-size: 13.5px; color: var(--text-muted); margin-top: 6px;">나에게 맞는 스마트 학습 모드를 선택하고 입장하세요.</p>
         </div>
 
         <div class="selector-group" style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 30px;">
           
           <!-- 모드 1: ID 순차 학습 -->
-          <label class="quiz-option-row" style="cursor: pointer; display: flex; align-items: flex-start; gap: 14px;">
-            <input type="radio" name="learning-mode-select" value="sequential" ${this.orderMode === 'sequential' ? 'checked' : ''} style="margin-top: 5px; scale: 1.2; accent-color: var(--primary);">
+          <label class="quiz-option-row" style="cursor: pointer; display: flex; align-items: flex-start; gap: 16px; padding: 18px; border: 1px solid var(--border-glass); border-radius: 16px; background: rgba(255,255,255,0.02); transition: var(--transition-smooth);">
+            <input type="radio" name="learning-mode-select" value="sequential" ${this.orderMode === 'sequential' ? 'checked' : ''} style="margin-top: 4px; width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
             <div style="flex: 1;">
-              <span class="option-row-label" style="font-size: 15px; font-weight: 800; display: block;"><i class="fa-solid fa-arrow-down-1-9"></i> ID 순차적 기본 학습</span>
-              <span style="font-size: 12px; color: var(--text-muted); display: block; margin-top: 2px;">하늘 천(天)부터 1번부터 1000번까지 차례대로 깊이 있게 정독 학습합니다.</span>
+              <span class="option-row-label" style="font-size: 15.5px; font-weight: 800; display: block; color: var(--text-main);"><i class="fa-solid fa-arrow-down-1-9" style="color: var(--primary); margin-right: 6px;"></i> ID 순차적 기본 학습</span>
+              <span style="font-size: 12.5px; color: var(--text-muted); display: block; margin-top: 4px; line-height: 1.4;">하늘 천(天)부터 1번부터 1000번까지 차례대로 깊이 있게 정독 학습합니다.</span>
             </div>
           </label>
 
           <!-- 모드 2: 난이도별 획수 학습 -->
-          <label class="quiz-option-row" style="cursor: pointer; display: flex; align-items: flex-start; gap: 14px;">
-            <input type="radio" name="learning-mode-select" value="level" ${this.orderMode === 'level' ? 'checked' : ''} style="margin-top: 5px; scale: 1.2; accent-color: var(--primary);">
+          <label class="quiz-option-row" style="cursor: pointer; display: flex; align-items: flex-start; gap: 16px; padding: 18px; border: 1px solid var(--border-glass); border-radius: 16px; background: rgba(255,255,255,0.02); transition: var(--transition-smooth);">
+            <input type="radio" name="learning-mode-select" value="level" ${this.orderMode === 'level' ? 'checked' : ''} style="margin-top: 4px; width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
             <div style="flex: 1;">
-              <span class="option-row-label" style="font-size: 15px; font-weight: 800; display: block;"><i class="fa-solid fa-filter"></i> 획수 난이도별 맞춤 학습</span>
-              <span style="font-size: 12px; color: var(--text-muted); display: block; margin-top: 2px; margin-bottom: 6px;">한자의 획수가 적은 순(쉬운 순)부터 단계를 나눠 효율적으로 학습합니다.</span>
+              <span class="option-row-label" style="font-size: 15.5px; font-weight: 800; display: block; color: var(--text-main);"><i class="fa-solid fa-filter" style="color: var(--primary); margin-right: 6px;"></i> 획수 난이도별 맞춤 학습</span>
+              <span style="font-size: 12.5px; color: var(--text-muted); display: block; margin-top: 4px; line-height: 1.4; margin-bottom: 8px;">한자의 획수가 적은 순(쉬운 순)부터 단계를 나눠 효율적으로 학습합니다.</span>
               
-              <select id="room-level-select" class="custom-select" style="margin-top: 4px; padding: 6px 10px;">
+              <select id="room-level-select" class="custom-select" style="margin-top: 6px; padding: 8px 12px; background: rgba(15,23,42,0.6); border: 1px solid var(--border-glass); border-radius: 10px; color: var(--text-main); font-size: 12.5px; font-weight: 700; width: 100%; max-width: 240px; cursor: pointer; outline: none; transition: border-color var(--transition-fast);">
                 <option value="1" ${this.selectedLevel === 1 ? 'selected' : ''}>1단계 (아주 쉬움: 1~4획)</option>
                 <option value="2" ${this.selectedLevel === 2 ? 'selected' : ''}>2단계 (쉬움: 5~8획)</option>
                 <option value="3" ${this.selectedLevel === 3 ? 'selected' : ''}>3단계 (보통: 9~12획)</option>
@@ -133,53 +133,53 @@ class FlashcardView {
           </label>
 
           <!-- 모드 3: 완료 복습 모드 -->
-          <label class="quiz-option-row" style="cursor: pointer; display: flex; align-items: flex-start; gap: 14px; border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.02);">
-            <input type="radio" name="learning-mode-select" value="review_completed" ${this.orderMode === 'review_completed' ? 'checked' : ''} style="margin-top: 5px; scale: 1.2; accent-color: var(--success);" ${completedCards.length === 0 ? 'disabled' : ''}>
-            <div style="flex: 1;">
-              <span class="option-row-label" style="font-size: 15px; font-weight: 800; display: block; color: var(--success);"><i class="fa-solid fa-circle-check"></i> 암기 완료 복습실 (총 ${completedCards.length}자)</span>
-              <span style="font-size: 12px; color: var(--text-muted); display: block; margin-top: 2px;">이미 암기 처리 완료된 천자문 카드들만 모아 잊지 않게 다지기 학습을 합니다.</span>
+          <label class="quiz-option-row" style="cursor: pointer; display: flex; align-items: flex-start; gap: 16px; padding: 18px; border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 16px; background: rgba(16, 185, 129, 0.02); transition: var(--transition-smooth);">
+            <input type="radio" name="learning-mode-select" value="review_completed" ${this.orderMode === 'review_completed' ? 'checked' : ''} style="margin-top: 4px; width: 18px; height: 18px; accent-color: var(--success); cursor: pointer;" ${completedCards.length === 0 ? 'disabled' : ''}>
+            <div style="flex: 1; width: 100%;">
+              <span class="option-row-label" style="font-size: 15.5px; font-weight: 800; display: block; color: var(--success);"><i class="fa-solid fa-circle-check" style="margin-right: 6px;"></i> 암기 완료 복습실 (총 ${completedCards.length}자)</span>
+              <span style="font-size: 12.5px; color: var(--text-muted); display: block; margin-top: 4px; line-height: 1.4;">이미 암기 처리 완료된 천자문 카드들만 모아 잊지 않게 다지기 학습을 합니다.</span>
               
               ${completedCards.length > 0 ? `
-                <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; max-height: 56px; overflow-y: auto; padding: 6px; background: rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid var(--border-glass);">
-                  ${completedCards.slice(0, 40).map(c => `<span style="font-size: 11px; padding: 2px 5px; background: rgba(16,185,129,0.15); color: var(--success); font-weight:700; border-radius:4px;">${c.hanja}</span>`).join('')}
-                  ${completedCards.length > 40 ? `<span style="font-size: 10px; color: var(--text-muted); padding: 2px;">...외 ${completedCards.length - 40}자</span>` : ''}
+                <div style="margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(32px, 1fr)); gap: 6px; max-height: 80px; overflow-y: auto; padding: 8px; background: rgba(0,0,0,0.25); border-radius: 12px; border: 1px solid var(--border-glass);">
+                  ${completedCards.slice(0, 40).map(c => `<span style="font-size: 12px; display: flex; align-items: center; justify-content: center; height: 26px; background: rgba(16,185,129,0.15); color: var(--success); font-weight:800; border-radius:6px; border: 1px solid rgba(16,185,129,0.2);">${c.hanja}</span>`).join('')}
+                  ${completedCards.length > 40 ? `<span style="font-size: 10px; display: flex; align-items: center; justify-content: center; height: 26px; color: var(--text-muted); font-weight: 700; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid var(--border-glass);">+${completedCards.length - 40}</span>` : ''}
                 </div>
               ` : `
-                <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px; font-style: italic;">* 아직 암기 완료 처리한 한자가 없습니다. 카드를 학습해 보세요!</span>
+                <span style="font-size: 11.5px; color: var(--text-muted); display: block; margin-top: 6px; font-style: italic;">* 아직 암기 완료 처리한 한자가 없습니다. 카드를 학습해 보세요!</span>
               `}
             </div>
           </label>
 
           <!-- 모드 4: 미흡 복습 모드 -->
-          <label class="quiz-option-row" style="cursor: pointer; display: flex; align-items: flex-start; gap: 14px; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.02);">
-            <input type="radio" name="learning-mode-select" value="review_incomplete" ${this.orderMode === 'review_incomplete' ? 'checked' : ''} style="margin-top: 5px; scale: 1.2; accent-color: var(--error);" ${incompleteCards.length === 0 ? 'disabled' : ''}>
-            <div style="flex: 1;">
-              <span class="option-row-label" style="font-size: 15px; font-weight: 800; display: block; color: var(--error);"><i class="fa-solid fa-circle-exclamation"></i> 암기 미흡 복습실 (총 ${incompleteCards.length}자)</span>
-              <span style="font-size: 12px; color: var(--text-muted); display: block; margin-top: 2px;">아직 외우지 못했거나 미완료된 한자 카드만 추려서 완독 포인트 적립을 도전합니다.</span>
+          <label class="quiz-option-row" style="cursor: pointer; display: flex; align-items: flex-start; gap: 16px; padding: 18px; border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 16px; background: rgba(239, 68, 68, 0.02); transition: var(--transition-smooth);">
+            <input type="radio" name="learning-mode-select" value="review_incomplete" ${this.orderMode === 'review_incomplete' ? 'checked' : ''} style="margin-top: 4px; width: 18px; height: 18px; accent-color: var(--error); cursor: pointer;" ${incompleteCards.length === 0 ? 'disabled' : ''}>
+            <div style="flex: 1; width: 100%;">
+              <span class="option-row-label" style="font-size: 15.5px; font-weight: 800; display: block; color: var(--error);"><i class="fa-solid fa-circle-exclamation" style="margin-right: 6px;"></i> 암기 미흡 복습실 (총 ${incompleteCards.length}자)</span>
+              <span style="font-size: 12.5px; color: var(--text-muted); display: block; margin-top: 4px; line-height: 1.4;">아직 외우지 못했거나 미완료된 한자 카드만 추려서 완독 포인트 적립을 도전합니다.</span>
               
               ${incompleteCards.length > 0 ? `
-                <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; max-height: 56px; overflow-y: auto; padding: 6px; background: rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid var(--border-glass);">
-                  ${incompleteCards.slice(0, 40).map(c => `<span style="font-size: 11px; padding: 2px 5px; background: rgba(239,68,68,0.15); color: var(--error); font-weight:700; border-radius:4px;">${c.hanja}</span>`).join('')}
-                  ${incompleteCards.length > 40 ? `<span style="font-size: 10px; color: var(--text-muted); padding: 2px;">...외 ${incompleteCards.length - 40}자</span>` : ''}
+                <div style="margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(32px, 1fr)); gap: 6px; max-height: 80px; overflow-y: auto; padding: 8px; background: rgba(0,0,0,0.25); border-radius: 12px; border: 1px solid var(--border-glass);">
+                  ${incompleteCards.slice(0, 40).map(c => `<span style="font-size: 12px; display: flex; align-items: center; justify-content: center; height: 26px; background: rgba(239,68,68,0.15); color: var(--error); font-weight:800; border-radius:6px; border: 1px solid rgba(239,68,68,0.2);">${c.hanja}</span>`).join('')}
+                  ${incompleteCards.length > 40 ? `<span style="font-size: 10px; display: flex; align-items: center; justify-content: center; height: 26px; color: var(--text-muted); font-weight: 700; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid var(--border-glass);">+${incompleteCards.length - 40}</span>` : ''}
                 </div>
               ` : `
-                <span style="font-size: 11px; color: var(--success); display: block; margin-top: 4px; font-weight: 800;"><i class="fa-solid fa-circle-check"></i> 축하합니다! 1000자 완독 및 올 클리어를 달성하셨습니다!</span>
+                <span style="font-size: 11.5px; color: var(--success); display: block; margin-top: 6px; font-weight: 800;"><i class="fa-solid fa-circle-check"></i> 축하합니다! 1000자 완독 및 올 클리어를 달성하셨습니다!</span>
               `}
             </div>
           </label>
 
           <!-- 모드 5: 실생활 단어 학습 모드 -->
-          <label class="quiz-option-row" style="cursor: pointer; display: flex; align-items: flex-start; gap: 14px; border-color: rgba(251, 191, 36, 0.2); background: rgba(251, 191, Yellow, 0.02);">
-            <input type="radio" name="learning-mode-select" value="word" ${this.orderMode === 'word' ? 'checked' : ''} style="margin-top: 5px; scale: 1.2; accent-color: var(--gold);">
+          <label class="quiz-option-row" style="cursor: pointer; display: flex; align-items: flex-start; gap: 16px; padding: 18px; border: 1px solid rgba(251, 191, 36, 0.25); border-radius: 16px; background: rgba(251, 191, 36, 0.02); transition: var(--transition-smooth);">
+            <input type="radio" name="learning-mode-select" value="word" ${this.orderMode === 'word' ? 'checked' : ''} style="margin-top: 4px; width: 18px; height: 18px; accent-color: var(--gold); cursor: pointer;">
             <div style="flex: 1;">
-              <span class="option-row-label" style="font-size: 15px; font-weight: 800; display: block; color: var(--gold);"><i class="fa-solid fa-language"></i> 실생활 단어 전용 학습 모드 (총 1000단어)</span>
-              <span style="font-size: 12px; color: var(--text-muted); display: block; margin-top: 2px;">천자문 글자와 연동된 실생활 다빈도 어휘 한자 단어들만 모아 입체적으로 암기합니다.</span>
+              <span class="option-row-label" style="font-size: 15.5px; font-weight: 800; display: block; color: var(--gold);"><i class="fa-solid fa-language" style="margin-right: 6px;"></i> 실생활 단어 전용 학습 모드 (총 1000단어)</span>
+              <span style="font-size: 12.5px; color: var(--text-muted); display: block; margin-top: 4px; line-height: 1.4;">천자문 글자와 연동된 실생활 다빈도 어휘 한자 단어들만 모아 입체적으로 암기합니다.</span>
             </div>
           </label>
 
         </div>
 
-        <button class="start-quiz-btn" id="fc-start-action-btn">
+        <button class="start-quiz-btn" id="fc-start-action-btn" style="width: 100%; padding: 16px; border: none; border-radius: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; font-size: 16px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: var(--transition-smooth); box-shadow: var(--shadow-primary);">
           선택한 모드로 학습 시작 <i class="fa-solid fa-arrow-right-to-bracket"></i>
         </button>
       </div>

@@ -92,11 +92,11 @@ html, body {
 
 .header-container {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between; /* 복원: 로고는 좌측, 위젯은 우측 끝 배치 */
   align-items: center;
-  flex-wrap: wrap; /* 요소들이 좁을 때 아래로 자연스럽게 흐르도록 설정 */
-  gap: 12px;
-  width: 92%;
+  flex-wrap: wrap; /* 모바일 대응 자동 흐름 */
+  gap: 12px 20px;
+  width: 94%;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -127,29 +127,45 @@ html, body {
 }
 
 /* 네비게이션 탭 컨트롤러 */
+/* 네비게이션 탭 컨트롤러 (하단 고정 프리미엄 플로팅 독) */
 .navigation-tabs {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px; /* PC/태블릿에서도 스마트폰 크기의 예쁜 독(Dock) 형태로 연출 */
   display: flex;
-  gap: 6px;
-  background: rgba(30, 41, 59, 0.4);
-  padding: 4px;
-  border-radius: 30px;
+  justify-content: space-around;
+  background: rgba(15, 23, 42, 0.94); /* 고급스러운 딥 다크 네이비 글래스 */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 8px 12px;
+  border-radius: 24px 24px 0 0; /* 윗 모서리만 둥글게 깎음 */
   border: 1px solid var(--border-glass);
+  border-bottom: none;
+  z-index: 1000;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5);
+  gap: 4px;
 }
 .tab-btn {
   background: transparent;
   border: none;
   color: var(--text-muted);
   font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 8px 18px;
-  border-radius: 25px;
+  font-size: 11px; /* 텍스트 크기 조정 */
+  font-weight: 700;
+  padding: 6px 4px;
+  border-radius: 16px;
   cursor: pointer;
   display: flex;
+  flex-direction: column; /* 세로 정렬(아이콘이 위, 텍스트가 아래) */
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 4px;
   transition: var(--transition-smooth);
   position: relative;
+  flex: 1;
 }
 .tab-btn:hover:not(.locked) {
   color: var(--text-main);
@@ -167,8 +183,8 @@ html, body {
 .lock-indicator {
   font-size: 10px;
   position: absolute;
-  top: -4px;
-  right: 0px;
+  top: 2px;
+  right: 18%;
   background: var(--error);
   color: white;
   width: 15px;
@@ -1384,44 +1400,7 @@ html, body {
   .header-container {
     width: 95%;
   }
-  .navigation-tabs {
-    position: fixed;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 999;
-    box-shadow: var(--shadow-lg);
-    background: rgba(8, 12, 20, 0.95);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    width: 94%;
-    justify-content: space-around;
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    padding: 6px;
-  }
-  .tab-btn {
-    padding: 10px 4px;
-    font-size: 11px;
-    flex-direction: column;
-    gap: 3px;
-    flex: 1;
-    justify-content: center;
-    border-radius: 12px;
-    font-weight: 700;
-  }
-  .tab-btn.active {
-    background: linear-gradient(135deg, var(--gold), #FBBF24);
-    box-shadow: var(--shadow-gold);
-    color: var(--text-dark);
-  }
-  .tab-btn.locked {
-    opacity: 0.4;
-  }
-  .lock-indicator {
-    top: -2px;
-    right: 15%;
-  }
+  
   .dashboard-grid {
     grid-template-columns: 1fr;
   }

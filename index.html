@@ -52,25 +52,7 @@
         <h1 class="logo-text">천자문 <span>마스터</span></h1>
       </div>
       
-      <!-- 현재 학습 탭 컨트롤러 -->
-      <nav class="navigation-tabs" aria-label="메인 메뉴">
-        <button class="tab-btn active" id="tab-dashboard" data-tab="dashboard">
-          <i class="fa-solid fa-chart-pie"></i> 대시보드
-        </button>
-        <button class="tab-btn" id="tab-flashcard" data-tab="flashcard">
-          <i class="fa-solid fa-clone"></i> 진도 학습
-        </button>
-        <button class="tab-btn" id="tab-quiz" data-tab="quiz">
-          <i class="fa-solid fa-pen-to-square"></i> 시험
-        </button>
-        <button class="tab-btn locked" id="tab-wrongnote" data-tab="wrongnote" title="오답 15개 이상 누적 시 잠금 해제">
-          <i class="fa-solid fa-book-bookmark"></i> 오답노트
-          <span class="lock-indicator"><i class="fa-solid fa-lock"></i></span>
-        </button>
-        <button class="tab-btn" id="tab-shop" data-tab="shop">
-          <i class="fa-solid fa-store"></i> 상점
-        </button>
-      </nav>
+      
       
       <!-- 사용자 프로필 요약 및 동기화 제어 -->
       <div class="user-status-widget">
@@ -168,6 +150,31 @@
 
   <!-- Firebase 및 App 실행용 ESM 진입점 -->
   <script type="module" src="js/app.js"></script>
+
+  <!-- 하단 고정식 네비게이션 바 (Bottom Navigation Dock) -->
+  <nav class="navigation-tabs" aria-label="메인 메뉴">
+    <button class="tab-btn active" id="tab-dashboard" data-tab="dashboard">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>대시보드</span>
+    </button>
+    <button class="tab-btn" id="tab-flashcard" data-tab="flashcard">
+      <i class="fa-solid fa-clone"></i>
+      <span>진도 학습</span>
+    </button>
+    <button class="tab-btn" id="tab-quiz" data-tab="quiz">
+      <i class="fa-solid fa-pen-to-square"></i>
+      <span>시험</span>
+    </button>
+    <button class="tab-btn locked" id="tab-wrongnote" data-tab="wrongnote" title="오답 15개 이상 누적 시 잠금 해제">
+      <i class="fa-solid fa-book-bookmark"></i>
+      <span>오답노트</span>
+      <span class="lock-indicator"><i class="fa-solid fa-lock"></i></span>
+    </button>
+    <button class="tab-btn" id="tab-shop" data-tab="shop">
+      <i class="fa-solid fa-store"></i>
+      <span>상점</span>
+    </button>
+  </nav>
 
 </body>
 </html>
