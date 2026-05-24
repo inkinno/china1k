@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- SEO 메타 데이터 -->
+  <title>천자문 마스터 - 게이미피케이션 결합형 한자 학습 플랫폼</title>
+  <meta name="description" content="게이미피케이션 요소(포인트, 콤보, 펫 꾸미기)를 결합한 프리미엄 천자문 학습 및 퀴즈 평가 서비스. 오답노트 자동 연동으로 천자문을 완벽히 정복하세요.">
+  <meta name="keywords" content="천자문, 한자학습, 플래시카드, 한자퀴즈, 오답노트, 천자문 마스터">
+  <meta name="author" content="Inkinno">
+  
+  <!-- Google Fonts 로드 (Outfit 및 Noto Sans KR) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome 아이콘 로드 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- 메인 스타일시트 -->
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- 상단 네비게이션 바 (Sticky Header) -->
+  <header id="main-header" class="sticky-header">
+    <div class="header-container">
+      <!-- 서비스 로고 (BI) -->
+      <div class="logo-area" id="logo-button">
+        <i class="fa-solid fa-graduation-cap logo-icon"></i>
+        <h1 class="logo-text">천자문 <span>마스터</span></h1>
+      </div>
+      
+      <!-- 현재 학습 탭 컨트롤러 -->
+      <nav class="navigation-tabs" aria-label="메인 메뉴">
+        <button class="tab-btn active" id="tab-dashboard" data-tab="dashboard">
+          <i class="fa-solid fa-chart-pie"></i> 대시보드
+        </button>
+        <button class="tab-btn" id="tab-flashcard" data-tab="flashcard">
+          <i class="fa-solid fa-clone"></i> 진도 학습
+        </button>
+        <button class="tab-btn" id="tab-quiz" data-tab="quiz">
+          <i class="fa-solid fa-pen-to-square"></i> 시험
+        </button>
+        <button class="tab-btn locked" id="tab-wrongnote" data-tab="wrongnote" title="오답 15개 이상 누적 시 잠금 해제">
+          <i class="fa-solid fa-book-bookmark"></i> 오답노트
+          <span class="lock-indicator"><i class="fa-solid fa-lock"></i></span>
+        </button>
+        <button class="tab-btn" id="tab-shop" data-tab="shop">
+          <i class="fa-solid fa-store"></i> 상점
+        </button>
+      </nav>
+      
+      <!-- 사용자 프로필 요약 및 동기화 제어 -->
+      <div class="user-status-widget">
+        <!-- 동기화 상태 및 수동 제어 -->
+        <div class="sync-controller">
+          <span id="sync-status" class="sync-badge clean" title="마지막 저장 상태">
+            <i class="fa-solid fa-cloud-check"></i> 동기화됨
+          </span>
+          <button id="manual-save-btn" class="save-btn" title="Firestore에 수동 저장">
+            <i class="fa-solid fa-floppy-disk"></i> 저장
+          </button>
+        </div>
+        
+        <!-- 실시간 개인화 요약 정보 -->
+        <div class="profile-summary" id="profile-summary-btn">
+          <div class="avatar-area">
+            <img src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=china1k" alt="User Avatar" id="user-avatar" class="avatar-img">
+          </div>
+          <div class="status-metrics">
+            <div class="metric-item point-metric" title="획득 포인트">
+              <i class="fa-solid fa-coins point-icon"></i>
+              <span id="user-points" class="metric-val">0.0</span>
+            </div>
+            <div class="metric-item streak-metric" title="연속 로그인 일수">
+              <i class="fa-solid fa-fire streak-icon"></i>
+              <span id="user-streak" class="metric-val">0</span>일
+            </div>
+            <div class="metric-item badge-metric" title="획득 배지 수">
+              <i class="fa-solid fa-award badge-icon"></i>
+              <span id="user-badges" class="metric-val">0</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 구글 로그인 / 로그아웃 버튼 -->
+        <div class="auth-control">
+          <button id="auth-action-btn" class="auth-btn login">
+            <i class="fa-brands fa-google"></i> 로그인
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 메인 콘텐츠 영역 (SPA 컨테이너) -->
+  <main id="app-container" class="main-content">
+    
+    <!-- 1. 대시보드 뷰 -->
+    <section id="view-dashboard" class="app-view active-view" aria-hidden="false">
+      <!-- 대시보드 동적 렌더링 영역 -->
+      <div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> 로딩 중...</div>
+    </section>
+    
+    <!-- 2. 플래시 카드 학습 뷰 -->
+    <section id="view-flashcard" class="app-view" aria-hidden="true">
+      <div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> 로딩 중...</div>
+    </section>
+    
+    <!-- 3. 퀴즈 테스트 뷰 -->
+    <section id="view-quiz" class="app-view" aria-hidden="true">
+      <div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> 로딩 중...</div>
+    </section>
+    
+    <!-- 4. 오답노트 뷰 -->
+    <section id="view-wrongnote" class="app-view" aria-hidden="true">
+      <div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> 로딩 중...</div>
+    </section>
+    
+    <!-- 5. 상점 MVP 뷰 -->
+    <section id="view-shop" class="app-view" aria-hidden="true">
+      <div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> 로딩 중...</div>
+    </section>
+
+  </main>
+
+  <!-- 대화형 모달 안내창 (Custom Inline Dialog Overlay) -->
+  <div id="custom-modal-overlay" class="modal-overlay hidden" aria-hidden="true" role="dialog">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-title">안내</h2>
+        <button id="modal-close-x" class="modal-close-btn" aria-label="닫기">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-message">
+        여기에 안내 메시지가 표시됩니다.
+      </div>
+      <div class="modal-footer" id="modal-actions">
+        <button id="modal-confirm-btn" class="modal-btn confirm">확인</button>
+        <button id="modal-cancel-btn" class="modal-btn cancel hidden">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 토스트 알림 컨테이너 (실시간 저장 상태 및 피드백 알림) -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Firebase 및 App 실행용 ESM 진입점 -->
+  <script type="module" src="js/app.js"></script>
+
+</body>
+</html>
