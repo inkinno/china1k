@@ -25,6 +25,21 @@ class StateManager {
       combo: 0,                    // 실시간 퀴즈 정답 콤보 카운트
       maxCombo: 0,                 // 역대 최고 콤보 수
       lastWritingId: 1,            // 신설: 획따라 쓰기 연습 모드의 마지막 학습 완료 한자 ID (이어쓰기 기능 지원)
+      friends: [                   // 신설: 친구 목록
+        { uid: 'bot_master50', name: '정예 학도 봇', points: 120.5, streak: 7, league: '골드 리그' },
+        { uid: 'bot_chunja1', name: '천자문 장인', points: 85.0, streak: 3, league: '실버 리그' }
+      ],
+      friendRequests: [            // 신설: 받은 친구 신청 목록
+        { uid: 'user_novice99', name: '열정 신입 학도' }
+      ],
+      settings: {                  // 신설: 학습 설정 및 리그 매칭 환경설정 (영구 보존)
+        ttsEnabled: false,
+        ttsSpeed: 1.1,
+        ttsGap: 600,
+        lastOrderMode: 'sequential',
+        lastSelectedLevel: 1,
+        matchWithFriends: true     // 리그 매칭 시 내 친구와 같은 리그에 배정받기 여부
+      },
       lastLoadedData: null         // Dirty Checking용 데이터베이스 최종 로드 스냅샷 (JSON)
     };
   }

@@ -259,10 +259,20 @@ class DatabaseManager {
         const loadedProgress = data.progress || {};
         const loadedWrongNote = data.wrongNote || {};
         const loadedLastWritingId = parseInt(data.lastWritingId !== undefined && data.lastWritingId !== null ? data.lastWritingId : 1);
+        const loadedFriends = Array.isArray(data.friends) ? data.friends : [];
+        const loadedFriendRequests = Array.isArray(data.friendRequests) ? data.friendRequests : [];
         const loadedShop = {
           streakShields: data.shop?.streakShields !== undefined && data.shop?.streakShields !== null ? data.shop.streakShields : 0,
           purchasedPetSlots: Array.isArray(data.shop?.purchasedPetSlots) ? data.shop.purchasedPetSlots : []
         };
+        const loadedSettings = Object.assign({
+          ttsEnabled: false,
+          ttsSpeed: 1.1,
+          ttsGap: 600,
+          lastOrderMode: 'sequential',
+          lastSelectedLevel: 1,
+          matchWithFriends: true
+        }, data.settings || {});
 
         stateManager.update({
           points: loadedPoints,
@@ -271,7 +281,10 @@ class DatabaseManager {
           progress: loadedProgress,
           wrongNote: loadedWrongNote,
           lastWritingId: loadedLastWritingId,
-          shop: loadedShop
+          friends: loadedFriends,
+          friendRequests: loadedFriendRequests,
+          shop: loadedShop,
+          settings: loadedSettings
         });
 
         // 로드 성공 시 스냅샷 문자열 백업 (Dirty Checking의 기준점)
@@ -282,7 +295,10 @@ class DatabaseManager {
           progress: loadedProgress,
           wrongNote: loadedWrongNote,
           lastWritingId: loadedLastWritingId,
-          shop: loadedShop
+          friends: loadedFriends,
+          friendRequests: loadedFriendRequests,
+          shop: loadedShop,
+          settings: loadedSettings
         });
         stateManager.update({ lastLoadedData: snapshotStr });
         
@@ -296,7 +312,10 @@ class DatabaseManager {
           progress: {},
           wrongNote: {},
           lastWritingId: 1,
-          shop: { streakShields: 0, purchasedPetSlots: [] }
+          friends: stateManager.get().friends || [],
+          friendRequests: stateManager.get().friendRequests || [],
+          shop: { streakShields: 0, purchasedPetSlots: [] },
+          settings: stateManager.get().settings || {}
         });
         stateManager.update({ lastLoadedData: snapshotStr });
         showInfoToast("새로운 학습 세션이 생성되었습니다. 환영합니다!");
@@ -330,7 +349,10 @@ class DatabaseManager {
         progress: state.progress,
         wrongNote: state.wrongNote,
         lastWritingId: state.lastWritingId || 1,
-        shop: state.shop
+        friends: state.friends || [],
+        friendRequests: state.friendRequests || [],
+        shop: state.shop,
+        settings: state.settings || {}
       });
 
       // [Dirty Checking]
@@ -351,7 +373,10 @@ class DatabaseManager {
         progress: state.progress,
         wrongNote: state.wrongNote,
         lastWritingId: state.lastWritingId || 1,
+        friends: state.friends || [],
+        friendRequests: state.friendRequests || [],
         shop: state.shop,
+        settings: state.settings || {},
         lastSavedAt: new Date().toISOString()
       };
 

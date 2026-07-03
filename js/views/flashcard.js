@@ -29,9 +29,39 @@ class FlashcardView {
 
     // 유저 요구사항 반영: TTS 기본 OFF, 한국어처럼 자연스러운 속도 및 음뜻 사이 간격 설정
     this.ttsEnabled = false;
-    this.ttsSpeed = 0.8;
+    this.ttsSpeed = 1.1;
     this.ttsGap = 600;
     this.ttsTimeoutId = null; // 신설: 음뜻 간격 비동기 타이머 식별자 (빠른 카드 전환 시 꼬임 방지)
+
+    // Firestore 동기화나 설정 변경 시 학습실 설정(TTS, 마지막 모드 등) 복원
+    stateManager.subscribe((oldState, newState) => {
+      if (oldState.settings !== newState.settings && newState.settings) {
+        this.loadSetupFromSettings();
+      }
+    });
+    this.loadSetupFromSettings();
+  }
+
+  // 전역 환경설정에서 학습실 셋업 불러오기
+  loadSetupFromSettings() {
+    const settings = stateManager.get().settings || {};
+    if (settings.ttsEnabled !== undefined) this.ttsEnabled = settings.ttsEnabled;
+    if (settings.ttsSpeed !== undefined) this.ttsSpeed = settings.ttsSpeed;
+    if (settings.ttsGap !== undefined) this.ttsGap = settings.ttsGap;
+    if (settings.lastOrderMode !== undefined) this.orderMode = settings.lastOrderMode;
+    if (settings.lastSelectedLevel !== undefined) this.selectedLevel = settings.lastSelectedLevel;
+  }
+
+  // 변경된 학습실 셋업을 전역 환경설정에 영구 보존
+  saveSetupToSettings() {
+    const state = stateManager.get();
+    const settings = { ...(state.settings || {}) };
+    settings.ttsEnabled = this.ttsEnabled;
+    settings.ttsSpeed = this.ttsSpeed;
+    settings.ttsGap = this.ttsGap;
+    settings.lastOrderMode = this.orderMode;
+    settings.lastSelectedLevel = this.selectedLevel;
+    stateManager.update({ settings });
   }
 
   // 브라우저 내장 오프라인 Web Speech TTS 단일 텍스트 재생 기능
@@ -125,9 +155,12 @@ class FlashcardView {
 
   // 화면 메인 렌더링 진입점
   render() {
+    const mainHeader = document.getElementById("main-header");
     if (!this.isStarted) {
+      if (mainHeader) mainHeader.style.display = "";
       this.renderStartRoom();
     } else {
+      if (mainHeader) mainHeader.style.display = "none";
       if (this.orderMode === 'writing') {
         flashcardWritingView.render(this.container, () => {
           this.isStarted = false;
@@ -152,10 +185,11 @@ class FlashcardView {
           <label class="tts-select-label">
             <span>속도:</span>
             <select id="tts-speed-select" class="tts-select">
-              <option value="0.7" ${this.ttsSpeed === 0.7 ? 'selected' : ''}>0.7x (느림)</option>
-              <option value="0.8" ${this.ttsSpeed === 0.8 ? 'selected' : ''}>0.8x (권장-자연스러움)</option>
-              <option value="0.9" ${this.ttsSpeed === 0.9 ? 'selected' : ''}>0.9x (보통)</option>
-              <option value="1.0" ${this.ttsSpeed === 1.0 ? 'selected' : ''}>1.0x (빠름)</option>
+              <option value="0.8" ${this.ttsSpeed === 0.8 ? 'selected' : ''}>0.8x (느림)</option>
+              <option value="1.0" ${this.ttsSpeed === 1.0 ? 'selected' : ''}>1.0x (보통)</option>
+              <option value="1.1" ${this.ttsSpeed === 1.1 ? 'selected' : ''}>1.1x (권장-빠르고 자연스러움)</option>
+              <option value="1.2" ${this.ttsSpeed === 1.2 ? 'selected' : ''}>1.2x (빠름)</option>
+              <option value="1.4" ${this.ttsSpeed === 1.4 ? 'selected' : ''}>1.4x (매우 빠름)</option>
             </select>
           </label>
           <label class="tts-select-label">
@@ -199,6 +233,7 @@ class FlashcardView {
             </div>
             <div class="drawer-content">
               <span style="font-size: 12.5px; color: var(--text-muted); display: block; line-height: 1.4;">하늘 천(天)부터 1번부터 1000번까지 차례대로 깊이 있게 정독 학습합니다. 이전에 학습한 진도가 있다면 자동으로 저장되어 이어보기가 지원됩니다.</span>
+              <button class="drawer-start-btn" data-action-mode="sequential" style="margin-top: 14px; width: 100%; padding: 13px; border: none; border-radius: 12px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; font-size: 13.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,242,254,0.3); transition: var(--transition-smooth);"><i class="fa-solid fa-play"></i> 이 모드로 학습 시작</button>
             </div>
           </div>
 
@@ -211,13 +246,14 @@ class FlashcardView {
             </div>
             <div class="drawer-content">
               <span style="font-size: 12.5px; color: var(--text-muted); display: block; line-height: 1.4; margin-bottom: 10px;">한자의 획수가 적은 순(쉬운 순)부터 단계를 나눠 효율적으로 학습합니다. 원하는 단계를 선택하세요.</span>
-              <select id="room-level-select" class="custom-select" style="padding: 8px 12px; background: rgba(15,23,42,0.8); border: 1px solid var(--border-glass); border-radius: 10px; color: var(--text-main); font-size: 12.5px; font-weight: 700; width: 100%; max-width: 280px; cursor: pointer; outline: none;">
+              <select id="room-level-select" class="custom-select" style="padding: 8px 12px; background: rgba(15,23,42,0.8); border: 1px solid var(--border-glass); border-radius: 10px; color: var(--text-main); font-size: 12.5px; font-weight: 700; width: 100%; max-width: 280px; cursor: pointer; outline: none; margin-bottom: 14px;">
                 <option value="1" ${this.selectedLevel === 1 ? 'selected' : ''}>1단계 (아주 쉬움: 1~4획)</option>
                 <option value="2" ${this.selectedLevel === 2 ? 'selected' : ''}>2단계 (쉬움: 5~8획)</option>
                 <option value="3" ${this.selectedLevel === 3 ? 'selected' : ''}>3단계 (보통: 9~12획)</option>
                 <option value="4" ${this.selectedLevel === 4 ? 'selected' : ''}>4단계 (어려움: 13~16획)</option>
                 <option value="5" ${this.selectedLevel === 5 ? 'selected' : ''}>5단계 (매우 어려움: 17획 이상)</option>
               </select>
+              <button class="drawer-start-btn" data-action-mode="level" style="width: 100%; padding: 13px; border: none; border-radius: 12px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; font-size: 13.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,242,254,0.3); transition: var(--transition-smooth);"><i class="fa-solid fa-play"></i> 이 모드로 학습 시작</button>
             </div>
           </div>
 
@@ -231,10 +267,11 @@ class FlashcardView {
             <div class="drawer-content">
               <span style="font-size: 12.5px; color: var(--text-muted); display: block; line-height: 1.4;">이미 암기 처리 완료된 천자문 카드들만 모아 잊지 않게 다지기 학습을 합니다.</span>
               ${completedCards.length > 0 ? `
-                <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(34px, 1fr)); gap: 6px; max-height: 100px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid var(--border-glass);">
+                <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(34px, 1fr)); gap: 6px; max-height: 100px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid var(--border-glass); margin-bottom: 14px;">
                   ${completedCards.slice(0, 40).map(c => `<span style="font-size: 12px; display: flex; align-items: center; justify-content: center; height: 28px; background: rgba(16,185,129,0.15); color: var(--success); font-weight:800; border-radius:6px; border: 1px solid rgba(16,185,129,0.2);">${c.hanja}</span>`).join('')}
                   ${completedCards.length > 40 ? `<span style="font-size: 10px; display: flex; align-items: center; justify-content: center; height: 28px; color: var(--text-muted); font-weight: 700; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid var(--border-glass);">+${completedCards.length - 40}</span>` : ''}
                 </div>
+                <button class="drawer-start-btn" data-action-mode="review_completed" style="width: 100%; padding: 13px; border: none; border-radius: 12px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; font-size: 13.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,242,254,0.3); transition: var(--transition-smooth);"><i class="fa-solid fa-play"></i> 이 모드로 학습 시작</button>
               ` : `
                 <span style="font-size: 11.5px; color: var(--text-muted); display: block; margin-top: 6px; font-style: italic;">* 아직 암기 완료 처리한 한자가 없습니다. 카드를 학습해 보세요!</span>
               `}
@@ -251,10 +288,11 @@ class FlashcardView {
             <div class="drawer-content">
               <span style="font-size: 12.5px; color: var(--text-muted); display: block; line-height: 1.4;">아직 외우지 못했거나 미완료된 한자 카드만 추려서 완독 포인트 적립을 도전합니다.</span>
               ${incompleteCards.length > 0 ? `
-                <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(34px, 1fr)); gap: 6px; max-height: 100px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid var(--border-glass);">
+                <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(34px, 1fr)); gap: 6px; max-height: 100px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid var(--border-glass); margin-bottom: 14px;">
                   ${incompleteCards.slice(0, 40).map(c => `<span style="font-size: 12px; display: flex; align-items: center; justify-content: center; height: 28px; background: rgba(239,68,68,0.15); color: var(--error); font-weight:800; border-radius:6px; border: 1px solid rgba(239,68,68,0.2);">${c.hanja}</span>`).join('')}
                   ${incompleteCards.length > 40 ? `<span style="font-size: 10px; display: flex; align-items: center; justify-content: center; height: 28px; color: var(--text-muted); font-weight: 700; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid var(--border-glass);">+${incompleteCards.length - 40}</span>` : ''}
                 </div>
+                <button class="drawer-start-btn" data-action-mode="review_incomplete" style="width: 100%; padding: 13px; border: none; border-radius: 12px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; font-size: 13.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,242,254,0.3); transition: var(--transition-smooth);"><i class="fa-solid fa-play"></i> 이 모드로 학습 시작</button>
               ` : `
                 <span style="font-size: 11.5px; color: var(--success); display: block; margin-top: 6px; font-weight: 800;"><i class="fa-solid fa-circle-check"></i> 축하합니다! 1000자 완독 및 올 클리어를 달성하셨습니다!</span>
               `}
@@ -270,6 +308,7 @@ class FlashcardView {
             </div>
             <div class="drawer-content">
               <span style="font-size: 12.5px; color: var(--text-muted); display: block; line-height: 1.4;">천자문 글자와 연동된 실생활 다빈도 어휘 한자 단어들만 모아 입체적으로 암기합니다.</span>
+              <button class="drawer-start-btn" data-action-mode="word" style="margin-top: 14px; width: 100%; padding: 13px; border: none; border-radius: 12px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; font-size: 13.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,242,254,0.3); transition: var(--transition-smooth);"><i class="fa-solid fa-play"></i> 이 모드로 학습 시작</button>
             </div>
           </div>
 
@@ -283,7 +322,7 @@ class FlashcardView {
             <div class="drawer-content">
               <span style="font-size: 12.5px; color: var(--text-muted); display: block; line-height: 1.4; margin-bottom: 12px;">반투명 글자 가이드를 터치/드래그하여 획순을 익히는 강력한 필기 연습실입니다.</span>
               
-              <div id="writing-sub-options" style="padding: 14px; background: rgba(0,0,0,0.35); border: 1px solid var(--border-glass); border-radius: 12px; display: flex; flex-direction: column; gap: 12px;">
+              <div id="writing-sub-options" style="padding: 14px; background: rgba(0,0,0,0.35); border: 1px solid var(--border-glass); border-radius: 12px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px;">
                 <div style="display: flex; gap: 16px; border-bottom: 1px dashed var(--border-glass); padding-bottom: 10px;">
                   <label style="cursor: pointer; font-size: 12.5px; display: flex; align-items: center; gap: 6px; font-weight: 700;">
                     <input type="radio" name="writing-order-select" value="sequential" checked style="accent-color: var(--primary);"> 천자문 순서대로
@@ -308,14 +347,11 @@ class FlashcardView {
                   </div>
                 </div>
               </div>
+              <button class="drawer-start-btn" data-action-mode="writing" style="width: 100%; padding: 13px; border: none; border-radius: 12px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; font-size: 13.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,242,254,0.3); transition: var(--transition-smooth);"><i class="fa-solid fa-play"></i> 이 모드로 학습 시작</button>
             </div>
           </div>
 
         </div>
-
-        <button class="start-quiz-btn" id="fc-start-action-btn" style="width: 100%; padding: 18px; border: none; border-radius: 18px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; font-size: 16px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: var(--transition-smooth); box-shadow: var(--shadow-primary);">
-          선택한 모드로 학습 입장 <i class="fa-solid fa-arrow-right-to-bracket"></i>
-        </button>
       </div>
     `;
 
@@ -324,7 +360,6 @@ class FlashcardView {
 
   // 학습 대기실의 이벤트 리스너 바인딩
   bindStartRoomEvents() {
-    const startBtn = document.getElementById("fc-start-action-btn");
     const levelSelect = document.getElementById("room-level-select");
     const drawerItems = document.querySelectorAll('.drawer-item');
 
@@ -383,6 +418,7 @@ class FlashcardView {
       levelSelect.addEventListener("change", (e) => {
         this.selectedLevel = parseInt(e.target.value);
         this.orderMode = 'level';
+        this.saveSetupToSettings();
         const levelRadio = document.querySelector('input[value="level"]');
         if (levelRadio) levelRadio.checked = true;
         drawerItems.forEach(d => d.classList.remove("expanded"));
@@ -391,8 +427,18 @@ class FlashcardView {
       });
     }
 
-    if (startBtn) {
-      startBtn.addEventListener("click", () => {
+    const drawerStartBtns = document.querySelectorAll(".drawer-start-btn");
+    drawerStartBtns.forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const mode = btn.getAttribute("data-action-mode");
+        if (mode) {
+          const radio = document.querySelector(`input[name="learning-mode-select"][value="${mode}"]`);
+          if (radio && radio.disabled) return;
+          if (radio) radio.checked = true;
+          this.orderMode = mode;
+        }
+
         // 획따라 쓰기 모드 진입 분기 제어
         if (this.orderMode === 'writing') {
           const isRandom = document.querySelector('input[name="writing-order-select"]:checked').value === 'random';
@@ -419,6 +465,7 @@ class FlashcardView {
         const state = stateManager.get();
         const savedProgress = state.progress?.[`lastSeen_${this.orderMode}`];
         this.isStarted = true;
+        this.saveSetupToSettings();
         if (savedProgress && typeof savedProgress.index === 'number' && this.orderMode !== 'writing') {
           this.currentIndex = savedProgress.index;
           showInfoToast(`이전 학습 진도(ID #${this.currentIndex + 1})부터 이어합니다.`);
@@ -428,7 +475,7 @@ class FlashcardView {
         this.lastPlayedIndex = -1;
         this.render();
       });
-    }
+    });
   }
 
   // 2. 실제 플래시 카드 학습실 구동 화면 (Learning Room)
@@ -486,29 +533,17 @@ class FlashcardView {
     this.container.innerHTML = `
       <div class="flashcard-layout">
         
-        <!-- 상단 제어 바 -->
-        <div class="learning-controls" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-          <div class="selector-group">
+        <!-- 상단 최소화 정보 바 -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px; padding: 0 4px; max-width: 360px; width: 100%;">
+          <div style="font-size: 13.5px; font-weight: 800; color: var(--text-main); display:flex; align-items:center; gap: 6px;">
             ${headerTitleHTML()}
           </div>
-          
-          <button class="speaker-btn" id="fc-speaker-btn" title="한국어 TTS 음성 1회 듣기">
-            <i class="fa-solid fa-volume-high"></i> TTS 듣기
-          </button>
-          
-          <div style="display:flex; align-items:center; gap: 12px;">
-            <div class="card-id" style="font-size: 13px;">
-              카드: <span style="color: var(--secondary); font-weight: 800;">${this.currentIndex + 1}</span> / ${this.filteredCards.length}
-            </div>
-            <button class="save-btn" id="fc-exit-btn" style="background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.4)); border: 1px solid var(--success); color: #FFF; font-weight: 800; padding: 6px 14px; border-radius: 12px; box-shadow: 0 0 12px rgba(16,185,129,0.25); display:flex; align-items:center; gap:6px; transition: var(--transition-smooth);">
-              <i class="fa-solid fa-floppy-disk"></i> 저장 및 종료
-            </button>
+          <div style="font-size: 13px; color: var(--text-muted);">
+            카드: <span style="color: var(--secondary); font-weight: 800;">${this.currentIndex + 1}</span> / ${this.filteredCards.length}
           </div>
         </div>
-
-        ${this.getTTSControlBarHTML()}
         
-        <!-- 3D 회전 카드 씬 -->
+        <!-- 3D 회전 카드 씬 (가장 먼저 눈에 띄도록 최상단 배치) -->
         <div class="card-scene" id="card-scene-btn" style="touch-action: pan-y;">
           <div class="flip-card" id="flip-card-body">
             
@@ -549,6 +584,7 @@ class FlashcardView {
           </div>
         </div>
         
+        <!-- 하단 조작 액션 바 -->
         <div class="card-action-bar" style="max-width: 360px; width: 100%;">
           <button class="action-btn prev" id="fc-prev-btn" ${this.currentIndex === 0 ? 'disabled style="opacity:0.3;cursor:not-allowed;"' : ''}>
             <i class="fa-solid fa-chevron-left"></i> 이전
@@ -563,6 +599,22 @@ class FlashcardView {
             다음 <i class="fa-solid fa-chevron-right"></i>
           </button>
         </div>
+        
+        <!-- 추가 버튼 (처음부터 다시하기 & 저장 및 종료) -->
+        <div style="display:flex; gap: 10px; max-width: 360px; width: 100%; margin-top: 10px;">
+          <button class="action-sub-btn" id="fc-reset-btn" style="flex: 1; padding: 12px; border-radius: 14px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #FCA5A5; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: var(--transition-smooth);">
+            <i class="fa-solid fa-rotate-left"></i> 처음부터 다시하기
+          </button>
+          <button class="action-sub-btn" id="fc-exit-btn" style="flex: 1; padding: 12px; border-radius: 14px; background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(16,185,129,0.5)); border: 1px solid var(--success); color: #FFF; font-size: 13px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: var(--transition-smooth); box-shadow: 0 4px 12px rgba(16,185,129,0.2);">
+            <i class="fa-solid fa-floppy-disk"></i> 저장 및 종료
+          </button>
+        </div>
+
+        <button class="speaker-btn" id="fc-speaker-btn" title="한국어 TTS 음성 1회 듣기" style="width: 100%; max-width: 360px; margin-top: 10px; padding: 12px; border-radius: 14px; background: rgba(0, 242, 254, 0.15); border: 1px solid var(--primary); color: var(--primary); font-size: 13.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: var(--transition-smooth);">
+          <i class="fa-solid fa-volume-high"></i> 현재 카드 TTS 1회 듣기
+        </button>
+
+        ${this.getTTSControlBarHTML()}
         
       </div>
     `;
@@ -587,26 +639,15 @@ class FlashcardView {
     this.container.innerHTML = `
       <div class="flashcard-layout">
         
-        <div class="learning-controls" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-          <div class="selector-group">
+        <!-- 상단 최소화 정보 바 -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px; padding: 0 4px; max-width: 360px; width: 100%;">
+          <div style="font-size: 13.5px; font-weight: 800; color: var(--text-main); display:flex; align-items:center; gap: 6px;">
             ${headerTitleHTML()}
           </div>
-          
-          <button class="speaker-btn" id="fc-speaker-btn" title="한국어 TTS 음성 1회 듣기">
-            <i class="fa-solid fa-volume-high"></i> TTS 듣기
-          </button>
-          
-          <div style="display:flex; align-items:center; gap: 12px;">
-            <div class="card-id" style="font-size: 13px;">
-              단어: <span style="color: var(--gold); font-weight: 800;">${this.currentIndex + 1}</span> / ${this.filteredCards.length}
-            </div>
-            <button class="save-btn" id="fc-exit-btn" style="background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.4)); border: 1px solid var(--success); color: #FFF; font-weight: 800; padding: 6px 14px; border-radius: 12px; box-shadow: 0 0 12px rgba(16,185,129,0.25); display:flex; align-items:center; gap:6px; transition: var(--transition-smooth);">
-              <i class="fa-solid fa-floppy-disk"></i> 저장 및 종료
-            </button>
+          <div style="font-size: 13px; color: var(--text-muted);">
+            단어: <span style="color: var(--gold); font-weight: 800;">${this.currentIndex + 1}</span> / ${this.filteredCards.length}
           </div>
         </div>
-
-        ${this.getTTSControlBarHTML()}
         
         <div class="card-scene" id="card-scene-btn" style="touch-action: pan-y;">
           <div class="flip-card" id="flip-card-body">
@@ -665,6 +706,22 @@ class FlashcardView {
           </button>
         </div>
         
+        <!-- 추가 버튼 (처음부터 다시하기 & 저장 및 종료) -->
+        <div style="display:flex; gap: 10px; max-width: 360px; width: 100%; margin-top: 10px;">
+          <button class="action-sub-btn" id="fc-reset-btn" style="flex: 1; padding: 12px; border-radius: 14px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #FCA5A5; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: var(--transition-smooth);">
+            <i class="fa-solid fa-rotate-left"></i> 처음부터 다시하기
+          </button>
+          <button class="action-sub-btn" id="fc-exit-btn" style="flex: 1; padding: 12px; border-radius: 14px; background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(16,185,129,0.5)); border: 1px solid var(--success); color: #FFF; font-size: 13px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: var(--transition-smooth); box-shadow: 0 4px 12px rgba(16,185,129,0.2);">
+            <i class="fa-solid fa-floppy-disk"></i> 저장 및 종료
+          </button>
+        </div>
+
+        <button class="speaker-btn" id="fc-speaker-btn" title="한국어 TTS 음성 1회 듣기" style="width: 100%; max-width: 360px; margin-top: 10px; padding: 12px; border-radius: 14px; background: rgba(0, 242, 254, 0.15); border: 1px solid var(--primary); color: var(--primary); font-size: 13.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: var(--transition-smooth);">
+          <i class="fa-solid fa-volume-high"></i> 현재 카드 TTS 1회 듣기
+        </button>
+
+        ${this.getTTSControlBarHTML()}
+        
       </div>
     `;
 
@@ -696,6 +753,7 @@ class FlashcardView {
     if (ttsToggle) {
       ttsToggle.addEventListener("change", (e) => {
         this.ttsEnabled = e.target.checked;
+        this.saveSetupToSettings();
         const icon = e.target.parentElement.querySelector("i");
         const span = e.target.parentElement.querySelector("span");
         if (icon) icon.style.color = this.ttsEnabled ? "var(--secondary)" : "var(--text-muted)";
@@ -722,11 +780,13 @@ class FlashcardView {
     if (ttsSpeedSelect) {
       ttsSpeedSelect.addEventListener("change", (e) => {
         this.ttsSpeed = parseFloat(e.target.value);
+        this.saveSetupToSettings();
       });
     }
     if (ttsGapSelect) {
       ttsGapSelect.addEventListener("change", (e) => {
         this.ttsGap = parseInt(e.target.value);
+        this.saveSetupToSettings();
       });
     }
 
@@ -761,6 +821,21 @@ class FlashcardView {
           this.render();
           showSuccessToast("학습 기록이 안전하게 저장되었습니다! 대기실로 복귀합니다.");
         }, 300);
+      });
+    }
+
+    const resetBtn = document.getElementById("fc-reset-btn");
+    if (resetBtn) {
+      resetBtn.addEventListener("click", () => {
+        if (!confirm("현재 학습 모드의 진도를 1번 카드(처음)부터 다시 시작하시겠습니까?")) return;
+        this.currentIndex = 0;
+        const state = stateManager.get();
+        const progress = { ...(state.progress || {}) };
+        progress[`lastSeen_${this.orderMode}`] = { index: 0, timestamp: Date.now() };
+        stateManager.update({ progress });
+        showInfoToast("진도를 처음부터 다시 시작합니다.");
+        this.lastPlayedIndex = -1;
+        this.render();
       });
     }
 

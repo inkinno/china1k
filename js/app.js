@@ -13,6 +13,7 @@ import shopView from "./views/shop.js";
 
 // UI 컨트롤러 (네비게이션 탭 등) 로드
 import "./ui/header.js";
+import "./ui/profile.js";
 
 class AppRouter {
   constructor() {
@@ -67,6 +68,16 @@ class AppRouter {
     // 3. 대상 뷰 동적 렌더링 수행
     try {
       targetView.render();
+      
+      // 학습실 진입 시 숨김 처리된 헤더를 탭 전환 시 복원 (학습 집중 모드 지원)
+      const mainHeader = document.getElementById("main-header");
+      if (mainHeader) {
+        if (viewName === 'flashcard' && targetView.isStarted) {
+          mainHeader.style.display = "none";
+        } else {
+          mainHeader.style.display = "";
+        }
+      }
     } catch (err) {
       console.error(`Failed to render view '${viewName}':`, err);
     }
