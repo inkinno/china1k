@@ -4,6 +4,7 @@
 import stateManager from "../state.js";
 import { ALL_CHUNJA_DATA, ALL_WORD_DATA } from "../data/index.js";
 import { showSuccessToast, showErrorToast, showInfoToast } from "../ui/toast.js";
+import { evaluateAllBadges } from "../data/badges.js";
 
 class QuizView {
   constructor() {
@@ -268,14 +269,14 @@ class QuizView {
     const totalQ = this.questions.length;
     this.score = Math.round((this.correctCount / totalQ) * 100);
 
-    // 퀴즈 완료 시 배지 조건 실시간 평가 검사
-    if (this.score === 100) {
-      const state = stateManager.get();
-      if (!state.badges.includes("quiz_master")) {
-        const newBadges = [...state.badges, "quiz_master"];
-        stateManager.update({ badges: newBadges });
-        showSuccessToast("🎉 만점 천재 배지를 획득하셨습니다!");
-      }
+    // 퀴즈 완료 시 90대 확장 배지 조건 실시간 평가 검사
+    const state = stateManager.get();
+    const newUnlocked = evaluateAllBadges(state);
+    if (newUnlocked.length > 0) {
+      stateManager.update({ badges: state.badges });
+      newUnlocked.forEach(b => {
+        showSuccessToast(`🎉 새로운 업적 배지 [${b.name}] 획득!`);
+      });
     }
 
     // 렌더링 수행

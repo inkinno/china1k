@@ -1,6 +1,8 @@
 // ==========================================================================
 // 전역 애플리케이션 상태 관리 (State Management)
 // ==========================================================================
+import { evaluateAllBadges } from "./data/badges.js";
+import { showSuccessToast } from "./ui/toast.js";
 
 class StateManager {
   constructor() {
@@ -53,6 +55,21 @@ class StateManager {
   update(updates) {
     const oldState = { ...this.state };
     this.state = { ...this.state, ...updates };
+    
+    // 90대 확장 배지 실시간 자동 평가 및 알림
+    if (!updates._skipBadgeEval) {
+      try {
+        const newUnlocked = evaluateAllBadges(this.state);
+        if (newUnlocked && newUnlocked.length > 0) {
+          newUnlocked.forEach(b => {
+            showSuccessToast(`🎉 새로운 업적 배지 [${b.name}] 획득!`);
+          });
+        }
+      } catch (e) {
+        console.error("Auto badge eval error:", e);
+      }
+    }
+
     this.notify(oldState, this.state);
   }
 

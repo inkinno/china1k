@@ -1,8 +1,9 @@
 // ==========================================================================
-// 대시보드 뷰 컴포넌트 (Dashboard View)
+// 대시보드 뷰 컴포넌트 (Dashboard View - 90대 확장 배지 전당 연동)
 // ==========================================================================
 import stateManager from "../state.js";
 import { ALL_CHUNJA_DATA } from "../data/index.js";
+import { BADGES_DATA, BADGE_CATEGORIES, getBadgeIconHtml, evaluateAllBadges } from "../data/badges.js";
 
 class DashboardView {
   constructor() {
@@ -21,23 +22,16 @@ class DashboardView {
     const wrongCount = Object.keys(state.wrongNote || {}).length;
     const streakShields = state.shop?.streakShields || 0;
 
-    // 배지 데이터 정의 (게이미피케이션)
-    const BADGES = [
-      { id: 'first_card', name: '첫 걸음', desc: '카드 1개 암기 완료', icon: 'fa-shoe-prints' },
-      { id: 'streak_3', name: '삼일천하', desc: '연속 출석 3일 달성', icon: 'fa-calendar-check' },
-      { id: 'master_50', name: '정예 학도', desc: '50자 이상 암기', icon: 'fa-shield-halved' },
-      { id: 'quiz_master', name: '만점 천재', desc: '시험 1회 100점 달성', icon: 'fa-crown' },
-      { id: 'combo_10', name: '신들린 콤보', desc: '10콤보 이상 달성', icon: 'fa-bolt-lightning' },
-      { id: 'rich_boy', name: '자산가', desc: '100포인트 보유', icon: 'fa-piggy-bank' }
-    ];
-
-    // 실시간 유저 획득 배지 감지 및 자동 지급 로직
-    this.evaluateAutoBadges(state, memorizedCount, BADGES);
+    // 실시간 90대 배지 조건 평가 및 획득 처리
+    const newUnlocked = evaluateAllBadges(state);
+    if (newUnlocked.length > 0) {
+      stateManager.update({ badges: state.badges });
+    }
 
     this.container.innerHTML = `
       <div class="dashboard-grid">
         
-        <!-- 왼쪽: 통계 및 배지 카드 -->
+        <!-- 왼쪽: 통계 및 90대 확장 배지 전당 -->
         <div class="dashboard-main-area">
           
           <!-- 카드 1: 나의 학습 통계 -->
@@ -60,7 +54,7 @@ class DashboardView {
                 <div class="stat-icon-wrapper"><i class="fa-solid fa-coins"></i></div>
                 <div class="stat-info">
                   <span class="stat-label">보유 포인트</span>
-                  <span class="stat-value" style="color: var(--gold);">${state.points.toFixed(1)} P</span>
+                  <span class="stat-value" style="color: var(--gold);">${(state.points || 0).toFixed(1)} P</span>
                 </div>
               </div>
               
@@ -69,7 +63,7 @@ class DashboardView {
                 <div class="stat-icon-wrapper"><i class="fa-solid fa-fire"></i></div>
                 <div class="stat-info">
                   <span class="stat-label">연속 출석</span>
-                  <span class="stat-value" style="color: #F97316;">${state.streak}일</span>
+                  <span class="stat-value" style="color: #F97316;">${state.streak || 0}일</span>
                 </div>
               </div>
               
@@ -90,20 +84,51 @@ class DashboardView {
             </div>
           </div>
           
-          <!-- 카드 2: 훈장 및 배지 (Gamification) -->
+          <!-- 카드 2: 90대 확장 훈장 및 배지 전당 (Gamification) -->
           <div class="dashboard-card">
-            <h3><i class="fa-solid fa-award"></i> 획득한 배지 전당 (${state.badges.length}/${BADGES.length})</h3>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">학습을 진행하며 영광스러운 한자 훈장 배지를 획득해 보세요!</p>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+              <h3 style="margin: 0;"><i class="fa-solid fa-award" style="color: var(--gold);"></i> 명예의 배지 전당 (${state.badges.length}/${BADGES_DATA.length})</h3>
+              <span style="font-size: 13px; font-weight: 800; color: var(--secondary); background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border-glass);">
+                달성율 ${((state.badges.length / BADGES_DATA.length) * 100).toFixed(0)}%
+              </span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
+              학습, 출석, 퀴즈, 리그 등 다양한 활동을 통해 90개의 영광스러운 훈장 아이콘을 수집해 보세요!
+            </p>
             
-            <div class="badges-container">
-              ${BADGES.map(badge => {
-                const isUnlocked = state.badges.includes(badge.id);
+            <div class="badges-hall-container">
+              ${Object.entries(BADGE_CATEGORIES).map(([catKey, catTitle]) => {
+                const catBadges = BADGES_DATA.filter(b => b.category === catKey);
+                const unlockedCatCount = catBadges.filter(b => state.badges.includes(b.id)).length;
                 return `
-                  <div class="badge-card ${isUnlocked ? 'unlocked' : 'locked'}" title="${badge.desc}">
-                    <i class="fa-solid ${badge.icon}"></i>
-                    <div>
-                      <div style="font-weight: 800;">${badge.name}</div>
-                      <div style="font-size: 10px; color: var(--text-muted); font-weight: 500;">${badge.desc}</div>
+                  <div class="badge-category-section" style="margin-bottom: 28px; background: rgba(0,0,0,0.15); padding: 16px; border-radius: 16px; border: 1px solid var(--border-glass);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px; margin-bottom: 14px;">
+                      <h4 style="font-size: 15px; font-weight: 800; color: var(--gold); margin: 0; display: flex; align-items: center; gap: 8px;">
+                        ${catTitle}
+                      </h4>
+                      <span style="font-size: 12px; font-weight: 700; color: ${unlockedCatCount > 0 ? 'var(--gold)' : 'var(--text-muted)'}; background: rgba(255,255,255,0.05); padding: 3px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+                        ${unlockedCatCount} / ${catBadges.length} 획득
+                      </span>
+                    </div>
+                    <div class="badges-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px;">
+                      ${catBadges.map(badge => {
+                        const isUnlocked = state.badges.includes(badge.id);
+                        return `
+                          <div class="badge-card ${isUnlocked ? 'unlocked tier-' + badge.tier : 'locked'}" title="[${badge.name}] ${badge.description}" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: ${isUnlocked ? 'rgba(255,215,0,0.04)' : 'rgba(255,255,255,0.015)'}; border: 1px solid ${isUnlocked ? 'rgba(255,215,0,0.25)' : 'rgba(255,255,255,0.04)'}; border-radius: 12px; transition: all 0.2s;">
+                            <div class="badge-icon-wrap" style="flex-shrink: 0; filter: ${isUnlocked ? 'drop-shadow(0 0 8px rgba(255,215,0,0.4))' : 'grayscale(100%) opacity(0.25)'}; display: flex; align-items: center; justify-content: center;">
+                              ${getBadgeIconHtml(badge.id, 46)}
+                            </div>
+                            <div style="min-width: 0; flex-grow: 1;">
+                              <div style="font-weight: 800; font-size: 13px; color: ${isUnlocked ? 'var(--text-main)' : 'var(--text-muted)'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;">
+                                ${badge.name}
+                              </div>
+                              <div style="font-size: 11px; color: var(--text-muted); font-weight: 500; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35;">
+                                ${badge.description}
+                              </div>
+                            </div>
+                          </div>
+                        `;
+                      }).join('')}
                     </div>
                   </div>
                 `;
@@ -122,7 +147,7 @@ class DashboardView {
             
             <div style="text-align: center; padding: 14px 0;">
               <i class="fa-solid fa-fire" style="font-size: 56px; color: #F97316; filter: drop-shadow(0 0 10px rgba(249,115,22,0.4));"></i>
-              <h4 style="font-size: 18px; margin-top: 10px;">연속 <span style="color: #F97316; font-weight: 800;">${state.streak}일</span> 등교 중</h4>
+              <h4 style="font-size: 18px; margin-top: 10px;">연속 <span style="color: #F97316; font-weight: 800;">${state.streak || 0}일</span> 등교 중</h4>
               <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">출석을 걸러 불꽃이 꺼지지 않도록 수호권을 구매해 보세요!</p>
             </div>
             
@@ -160,39 +185,6 @@ class DashboardView {
         
       </div>
     `;
-  }
-
-  // 비즈니스 룰 기반 배지 자동 지급 연산
-  evaluateAutoBadges(state, memorizedCount, BADGES) {
-    const earnedBadges = [...state.badges];
-    let updated = false;
-
-    const tryUnlock = (badgeId) => {
-      if (!earnedBadges.includes(badgeId)) {
-        earnedBadges.push(badgeId);
-        updated = true;
-      }
-    };
-
-    // 1. 카드 1개 암기
-    if (memorizedCount >= 1) tryUnlock('first_card');
-    
-    // 2. 연속 출석 3일
-    if (state.streak >= 3) tryUnlock('streak_3');
-    
-    // 3. 50자 이상 암기
-    if (memorizedCount >= 50) tryUnlock('master_50');
-    
-    // 4. 역대 최고 콤보 10콤보 이상
-    if (state.maxCombo >= 10) tryUnlock('combo_10');
-    
-    // 5. 100포인트 돌파
-    if (state.points >= 100.0) tryUnlock('rich_boy');
-
-    if (updated) {
-      // 갱신 시 상태 변경
-      stateManager.update({ badges: earnedBadges });
-    }
   }
 }
 
