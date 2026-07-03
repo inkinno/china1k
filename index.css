@@ -1568,4 +1568,265 @@ html, body {
   display: none !important;
 }
 
+/* 17. 필수 로그인 게이트 오버레이 (Login Gate Overlay - 비로그인 기능 파괴) */
+.login-gate-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at 50% 30%, #16102E 0%, #080C14 80%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+  opacity: 1;
+  transition: opacity var(--transition-smooth);
+  padding: 20px;
+}
+.login-gate-overlay.hidden {
+  display: none !important;
+  opacity: 0;
+  pointer-events: none;
+}
+.login-gate-card {
+  background: rgba(16, 22, 38, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 28px;
+  width: 100%;
+  max-width: 480px;
+  padding: 40px 32px;
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 40px rgba(138, 43, 226, 0.25);
+  animation: gateCardSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes gateCardSlideUp {
+  from { transform: translateY(30px) scale(0.95); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+.login-gate-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.gate-logo-icon {
+  font-size: 40px;
+  background: linear-gradient(135deg, var(--secondary), var(--primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 12px rgba(0, 242, 254, 0.4));
+}
+.gate-logo-text {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: #FFF;
+}
+.gate-logo-text span {
+  background: linear-gradient(135deg, var(--gold), #F59E0B);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.login-gate-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  font-weight: 500;
+}
+.login-gate-notice {
+  background: rgba(138, 43, 226, 0.12);
+  border: 1px solid rgba(138, 43, 226, 0.3);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  margin-bottom: 30px;
+  color: #E2E8F0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.login-gate-notice i {
+  font-size: 24px;
+  color: #A78BFA;
+  flex-shrink: 0;
+}
+.login-gate-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.gate-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 16px;
+  border: none;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: var(--transition-smooth);
+}
+.gate-btn.google {
+  background: #FFF;
+  color: #0F172A;
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+}
+.gate-btn.google:hover {
+  background: #F1F5F9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
+}
+.gate-btn.google i {
+  color: #EA4335;
+  font-size: 18px;
+}
+.gate-btn.demo {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #FFF;
+  box-shadow: var(--shadow-primary);
+}
+.gate-btn.demo:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+.login-gate-footer {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.login-gate-footer i {
+  color: var(--success);
+}
+
+/* 18. 학습 대기실 아코디언 드로어 UI (Accordion Drawer) */
+.drawer-item {
+  border: 1px solid var(--border-glass);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  transition: var(--transition-smooth);
+  overflow: hidden;
+  cursor: pointer;
+}
+.drawer-item:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+}
+.drawer-item.expanded {
+  border-color: var(--primary);
+  background: rgba(138, 43, 226, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+.drawer-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  user-select: none;
+}
+.drawer-header input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+.drawer-title {
+  flex: 1;
+  font-size: 15.5px;
+  font-weight: 800;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.drawer-arrow {
+  font-size: 14px;
+  color: var(--text-muted);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.drawer-item.expanded .drawer-arrow {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+.drawer-content {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, padding 0.3s ease;
+  padding: 0 20px;
+  border-top: 1px solid transparent;
+}
+.drawer-item.expanded .drawer-content {
+  max-height: 500px;
+  opacity: 1;
+  padding: 16px 20px 20px 20px;
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+/* 19. TTS 맞춤 제어 바 (TTS Controls) */
+.tts-control-bar {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12.5px;
+  width: 100%;
+}
+.tts-toggle-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--text-main);
+  cursor: pointer;
+}
+.tts-toggle-group input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--secondary);
+  cursor: pointer;
+}
+.tts-settings-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.tts-select-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.tts-select {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-glass);
+  border-radius: 6px;
+  color: var(--text-main);
+  font-size: 12px;
+  padding: 3px 8px;
+  outline: none;
+  cursor: pointer;
+}
+
+
 

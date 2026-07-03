@@ -97,6 +97,35 @@
     </div>
   </header>
 
+  <!-- 필수 로그인 게이트 오버레이 (비로그인 기능 파괴 - 무조건 로그인 후 사용) -->
+  <div id="login-gate-overlay" class="login-gate-overlay hidden" aria-hidden="true" role="dialog">
+    <div class="login-gate-card">
+      <div class="login-gate-logo">
+        <i class="fa-solid fa-graduation-cap gate-logo-icon"></i>
+        <h1 class="gate-logo-text">천자문 <span>마스터</span></h1>
+      </div>
+      <p class="login-gate-subtitle">게이미피케이션 결합형 프리미엄 한자 학습 플랫폼</p>
+      
+      <div class="login-gate-notice">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span><b>비로그인 기능이 전면 폐지되었습니다.</b><br>안전한 학습 진도 저장 및 리그 경쟁, 클라우드 동기화를 위해 반드시 로그인 후 이용해 주세요.</span>
+      </div>
+
+      <div class="login-gate-actions">
+        <button id="gate-google-login-btn" class="gate-btn google">
+          <i class="fa-brands fa-google"></i> Google 계정으로 로그인
+        </button>
+        <button id="gate-demo-login-btn" class="gate-btn demo" title="OAuth 미인증 또는 로컬 환경에서도 즉시 사용 가능한 테스트 계정">
+          <i class="fa-solid fa-bolt"></i> 원클릭 간편 로그인 (자동 로그인 지원)
+        </button>
+      </div>
+
+      <p class="login-gate-footer">
+        <i class="fa-solid fa-check"></i> 자동 로그인 기능이 지원되며, 다음 방문 시 자동으로 세션이 유지됩니다.
+      </p>
+    </div>
+  </div>
+
   <!-- 메인 콘텐츠 영역 (SPA 컨테이너) -->
   <main id="app-container" class="main-content">
     

@@ -42,7 +42,8 @@ class DatabaseManager {
         this.isAuthenticated = true;
         this.userId = user.uid;
         stateManager.update({ user });
-        showInfoToast("학습 데이터를 Firestore로부터 불러오는 중...");
+        this.hideLoginGate();
+        showInfoToast("학습 데이터를 불러오는 중... (자동로그인 유지 중)");
         
         // 인증 즉시 클라이언트 데이터 로드 트리거
         await this.loadUserData();
@@ -56,43 +57,72 @@ class DatabaseManager {
         stateManager.resetState();
         stateManager.update({ user: null });
         
-        // 최초 상태 감지 시 기존에 아무 세션이 없었던 경우에만 신규 로그인/익명 폴백 시도
+        // 비로그인 기능 파괴 - 무조건 로그인 후 사용 가능하게 로그인 게이트 오버레이 표시
+        this.showLoginGate();
+        
         if (!isInitialAuthChecked) {
           isInitialAuthChecked = true;
-          
           const urlParams = new URLSearchParams(window.location.search);
           const customToken = urlParams.get("token");
 
           if (customToken) {
             signInWithCustomToken(auth, customToken)
-              .then((userCredential) => {
+              .then(() => {
                 showSuccessToast("사용자 토큰으로 로그인 완료!");
+                this.hideLoginGate();
               })
               .catch((err) => {
-                console.warn("Custom token login failed, falling back to Anonymous:", err);
-                this.fallbackToAnonymous();
+                console.warn("Custom token login failed:", err);
+                this.showLoginGate();
               });
-          } else {
-            this.fallbackToAnonymous();
           }
         }
       }
     });
   }
 
-  // 익명 로그인 폴백
-  fallbackToAnonymous() {
-    // 이미 로그인된 상태가 아닐 때만 익명 로그인 시도
-    if (auth.currentUser) return;
-    
-    signInAnonymously(auth)
-      .then(() => {
-        showInfoToast("익명 세션으로 천자문 학습을 시작합니다.");
-      })
-      .catch((err) => {
-        showErrorToast("인증 세션 생성 실패. 오프라인 모드로 진입합니다.");
-        console.error("Auth Failure:", err);
-      });
+  // 필수 로그인 게이트 표시 (비로그인 접근 차단)
+  showLoginGate() {
+    const gate = document.getElementById("login-gate-overlay");
+    if (gate) {
+      gate.classList.remove("hidden");
+      gate.setAttribute("aria-hidden", "false");
+    }
+  }
+
+  // 필수 로그인 게이트 숨기기
+  hideLoginGate() {
+    const gate = document.getElementById("login-gate-overlay");
+    if (gate) {
+      gate.classList.add("hidden");
+      gate.setAttribute("aria-hidden", "true");
+    }
+  }
+
+  // 원클릭 간편 로그인 (로컬 테스트 및 자동 로그인 지원)
+  async signInWithOneClickDemo() {
+    showInfoToast("원클릭 간편 로그인 세션을 생성하는 중...");
+    try {
+      // 로컬 테스트/배포 환경 호환을 위해 익명 세션 생성 후 displayName 프로필 매핑
+      const result = await signInAnonymously(auth);
+      showSuccessToast("원클릭 간편 로그인 완료! (자동로그인 지원)");
+      this.hideLoginGate();
+    } catch (err) {
+      console.error("OneClick Login Failed:", err);
+      // 오프라인 상태이거나 파이어베이스 연결 제한 시 로컬 오프라인 세션 생성 (완전 방어 코드)
+      const mockUser = {
+        uid: "local_scholar_" + Date.now().toString().slice(-4),
+        displayName: "천자문 장학생",
+        photoURL: "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=chunja_master"
+      };
+      this.isAuthenticated = true;
+      this.userId = mockUser.uid;
+      stateManager.update({ user: mockUser });
+      await this.loadUserData();
+      this.startAutoSaveTimer();
+      this.hideLoginGate();
+      showSuccessToast("로컬 오프라인 세션으로 로그인 완료! (자동로그인 지원)");
+    }
   }
 
   // 구글 팝업 로그인 시도
@@ -102,10 +132,14 @@ class DatabaseManager {
     try {
       const result = await signInWithPopup(auth, provider);
       showSuccessToast(`${result.user.displayName}님 환영합니다!`);
+      this.hideLoginGate();
     } catch (err) {
-      console.warn("Google Sign-In failed, falling back to Anonymous:", err);
-      // 구글 로그인 취소 또는 에러 시 익명 로그인 폴백
-      this.fallbackToAnonymous();
+      console.warn("Google Sign-In failed:", err);
+      if (err.code === 'auth/popup-blocked') {
+        showErrorToast("팝업 차단이 감지되었습니다. 원클릭 간편 로그인을 이용하시거나 팝업 차단을 해제해 주세요.");
+      } else {
+        showErrorToast("구글 로그인 실패 (환경 제한 등). 원클릭 간편 로그인을 이용해 주세요.");
+      }
     }
   }
 
@@ -113,15 +147,38 @@ class DatabaseManager {
   initGlobalEvents() {
     // 구글 로그인 요청
     document.addEventListener("firebase-login-request", async () => {
-      await this.signInWithGoogle();
+      this.showLoginGate();
     });
 
     // 구글 로그아웃 요청
     document.addEventListener("firebase-logout-request", () => {
       signOut(auth)
-        .then(() => showSuccessToast("성공적으로 로그아웃되었습니다."))
-        .catch(err => showErrorToast("로그아웃 실패"));
+        .then(() => {
+          showSuccessToast("성공적으로 로그아웃되었습니다.");
+          this.showLoginGate();
+        })
+        .catch(err => {
+          // 로컬 세션 로그아웃 강제 처리
+          this.isAuthenticated = false;
+          this.userId = null;
+          stateManager.resetState();
+          stateManager.update({ user: null });
+          this.showLoginGate();
+          showSuccessToast("로그아웃되었습니다.");
+        });
     });
+
+    // 로그인 게이트 버튼 이벤트 바인딩
+    setTimeout(() => {
+      const gateGoogleBtn = document.getElementById("gate-google-login-btn");
+      const gateDemoBtn = document.getElementById("gate-demo-login-btn");
+      if (gateGoogleBtn) {
+        gateGoogleBtn.addEventListener("click", () => this.signInWithGoogle());
+      }
+      if (gateDemoBtn) {
+        gateDemoBtn.addEventListener("click", () => this.signInWithOneClickDemo());
+      }
+    }, 100);
 
     // 수동 저장 요청 이벤트
     document.addEventListener("firestore-manual-save-request", async () => {
